@@ -1,0 +1,11 @@
+#dependencies
+node_modules/
+
+#builds
+dist/
+.next/
+out/
+
+#env
+*.env
+.env.*
