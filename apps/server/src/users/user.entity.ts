@@ -4,7 +4,12 @@ import {
   Column,
   CreateDateColumn,
   UpdateDateColumn,
+  OneToOne,
+  ManyToMany,
+  JoinTable,
 } from 'typeorm';
+import { Password } from './password.entity';
+import { Role } from './role.entity';
 
 @Entity('users')
 export class User {
@@ -19,6 +24,13 @@ export class User {
 
   @Column({ default: true })
   isActive: boolean;
+
+  @OneToOne(() => Password, (password) => password.user)
+  password: Password | null;
+
+  @ManyToMany(() => Role, (r) => r.users, { eager: true })
+  @JoinTable({ name: 'user_roles' })
+  roles: Role[];
 
   @CreateDateColumn()
   createdAt: Date;

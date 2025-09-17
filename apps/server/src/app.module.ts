@@ -1,12 +1,13 @@
 import { Module } from '@nestjs/common';
+import { AppController } from './app.controller';
+import { AppService } from './app.service';
 import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
-import { UserController } from './controllers/users.controller';
-import { UserService } from './services/users.service';
 import { UsersModule } from './users/users.module';
 @Module({
   imports: [
+    UsersModule,
     // Loads env variables
     ConfigModule.forRoot({
       isGlobal: true,
@@ -23,12 +24,11 @@ import { UsersModule } from './users/users.module';
         password: configService.get('DATABASE_PASSWORD'),
         database: configService.get('DATABASE_NAME'),
         autoLoadEntities: true,
-        synchronize: false,
+        synchronize: true,
       }),
     }),
-    UsersModule,
   ],
-  controllers: [UserController],
-  providers: [UserService],
+  controllers: [AppController],
+  providers: [AppService],
 })
 export class AppModule {}
