@@ -23,4 +23,7 @@ export class UsersService {
   async remove(id: string): Promise<void> {
     await this.repo.delete(id);
   }
+  findByEmail(email: string): Promise<User | null> {
+    return this.repo.findOneBy({ email });
+  }
 }

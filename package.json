@@ -17,6 +17,9 @@
   },
   "dependencies": {
     "@nestjs/config": "^4.0.2",
+    "@nestjs/jwt": "^11.0.0",
+    "@nestjs/mapped-types": "*",
+    "@nestjs/passport": "^11.0.5",
     "@nestjs/typeorm": "^11.0.0",
     "antd": "^5.27.3",
     "axios": "^1.12.2",
@@ -25,6 +28,8 @@
     "class-validator": "^0.14.2",
     "i": "^0.3.7",
     "jwt-decode": "^4.0.0",
+    "passport": "^0.7.0",
+    "passport-jwt": "^4.0.1",
     "pg": "^8.16.3",
     "typeorm": "^0.3.26"
   }
