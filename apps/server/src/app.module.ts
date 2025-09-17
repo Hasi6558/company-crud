@@ -5,9 +5,11 @@ import { ConfigModule } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
+import { PasswordsModule } from './users/passwords.module';
 @Module({
   imports: [
     UsersModule,
+    PasswordsModule,
     // Loads env variables
     ConfigModule.forRoot({
       isGlobal: true,
