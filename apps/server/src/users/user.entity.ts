@@ -9,7 +9,7 @@ import {
   JoinTable,
 } from 'typeorm';
 import { Password } from './password.entity';
-import { Role } from './role.entity';
+import { Role } from '../roles/role.entity';
 
 @Entity('users')
 export class User {

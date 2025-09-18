@@ -7,10 +7,12 @@ import { ConfigService } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { PasswordsModule } from './users/passwords.module';
 import { AuthModule } from './auth/auth.module';
+import { RolesModule } from './roles/roles.module';
 @Module({
   imports: [
     UsersModule,
     PasswordsModule,
+    RolesModule,
     // Loads env variables
     ConfigModule.forRoot({
       isGlobal: true,
@@ -31,6 +33,7 @@ import { AuthModule } from './auth/auth.module';
       }),
     }),
     AuthModule,
+    RolesModule,
   ],
   controllers: [AppController],
   providers: [AppService],
