@@ -26,4 +26,11 @@ export class UsersService {
   findByEmail(email: string): Promise<User | null> {
     return this.repo.findOneBy({ email });
   }
+
+  async findOneWithPermissions(id: string): Promise<User | null> {
+    return this.repo.findOne({
+      where: { id },
+      relations: ['roles', 'roles.permissions'],
+    });
+  }
 }
