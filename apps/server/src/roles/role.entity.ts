@@ -5,10 +5,8 @@ import {
   ManyToMany,
   CreateDateColumn,
   UpdateDateColumn,
-  JoinTable,
 } from 'typeorm';
 import { User } from '../users/user.entity';
-import { Permission } from 'src/auth/permission.entity';
 
 @Entity('roles')
 export class Role {
@@ -25,13 +23,8 @@ export class Role {
   @ManyToMany(() => User, (u) => u.roles)
   users: User[];
 
-  @ManyToMany(() => Permission, (permission) => permission.roles)
-  @JoinTable({
-    name: 'role_permission',
-    joinColumn: { name: 'roleId', referencedColumnName: 'id' },
-    inverseJoinColumn: { name: 'permissionId', referencedColumnName: 'id' },
-  })
-  permissions: Permission[];
+  @Column('simple-array', { nullable: true, default: () => "''" })
+  permissions: string[];
 
   @CreateDateColumn()
   createdAt: Date;
