@@ -6,14 +6,10 @@ import { PasswordsService } from './passwords.service';
 import { User } from './user.entity';
 import { Password } from './password.entity';
 import { Role } from '../roles/role.entity';
-import { Permission } from 'src/auth/permission.entity';
 import { AuthModule } from '../auth/auth.module';
 
 @Module({
-  imports: [
-    TypeOrmModule.forFeature([User, Password, Role, Permission]),
-    forwardRef(() => AuthModule),
-  ],
+  imports: [TypeOrmModule.forFeature([User, Password, Role]), forwardRef(() => AuthModule)],
   controllers: [UsersController],
   providers: [UsersService, PasswordsService],
   exports: [UsersService, PasswordsService],
