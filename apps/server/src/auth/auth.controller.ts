@@ -2,8 +2,6 @@ import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './login.dto';
 import { AuthGuard } from './auth.guard';
-import { Roles } from './roles.decorator';
-import { RolesGuard } from './roles.guard';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -21,9 +19,8 @@ export class AuthController {
     return this.authService.signToken(user);
   }
 
-  @UseGuards(AuthGuard, RolesGuard)
+  @UseGuards(AuthGuard)
   @Get('me')
-  @Roles(['ADMIN'])
   me(@Req() req: AuthenticatedRequest) {
     return { user: req.user };
   }

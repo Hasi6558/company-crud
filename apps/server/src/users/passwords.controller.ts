@@ -8,7 +8,7 @@ export class passwordsController {
 
   //set when after user creation
   @Post()
-  async setInitial(@Param('userid') userid: string, @Body() dto: SetPasswordDto) {
+  async setInitial(@Param('userId') userid: string, @Body() dto: SetPasswordDto) {
     return this.passwords.setInitialPassword(userid, dto.password);
   }
 

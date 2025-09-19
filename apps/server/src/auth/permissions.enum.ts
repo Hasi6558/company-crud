@@ -1,17 +1,18 @@
 export enum Permissions {
   // User permissions
-  READ_USERS = 'read_users',
-  CREATE_USERS = 'create_users',
-  UPDATE_USERS = 'update_users',
-  DELETE_USERS = 'delete_users',
+  READ_USERS = 'read:users',
+  READ_PROFILE = 'read:user',
+  CREATE_USERS = 'create:users',
+  UPDATE_USERS = 'update:users',
+  DELETE_USERS = 'delete:users',
 
   // Role permissions
-  READ_ROLES = 'read_roles',
-  CREATE_ROLES = 'create_roles',
-  UPDATE_ROLES = 'update_roles',
-  DELETE_ROLES = 'delete_roles',
+  READ_ROLES = 'read:roles',
+  CREATE_ROLES = 'create:roles',
+  UPDATE_ROLES = 'update:roles',
+  DELETE_ROLES = 'delete:roles',
 
   // Admin permissions
-  ADMIN_ALL = 'admin_all',
-  ADMIN_EDIT = 'admin_edit',
+  ADMIN_ALL = 'admin:all',
+  ADMIN_EDIT = 'admin:edit',
 }

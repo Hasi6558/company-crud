@@ -16,9 +16,18 @@ export class PasswordsService {
 
   async setInitialPassword(userId: string, plain: string) {
     // check the existing password
+    console.log('Checking for existing password for userId:', userId);
 
     const existing = await this.passRepo.findOne({ where: { user: { id: userId } } });
-    if (existing) throw new ConflictException('Password already set for this user');
+    console.log('Existing password found:', existing);
+    if (existing) {
+      console.log('Existing password details:', {
+        id: existing.id,
+        userId: existing.user?.id,
+        createdAt: existing.createdAt,
+      });
+      throw new ConflictException('Password already set for this user');
+    }
 
     //check if user is exist
     const user = await this.userRepo.findOne({ where: { id: userId } });

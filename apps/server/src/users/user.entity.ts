@@ -5,8 +5,8 @@ import {
   CreateDateColumn,
   UpdateDateColumn,
   OneToOne,
-  ManyToMany,
-  JoinTable,
+  ManyToOne,
+  JoinColumn,
 } from 'typeorm';
 import { Password } from './password.entity';
 import { Role } from '../roles/role.entity';
@@ -28,9 +28,9 @@ export class User {
   @OneToOne(() => Password, (password) => password.user)
   password: Password | null;
 
-  @ManyToMany(() => Role, (r) => r.users, { eager: true })
-  @JoinTable({ name: 'user_roles' })
-  roles: Role[];
+  @ManyToOne(() => Role, (role) => role.users, { eager: true })
+  @JoinColumn({ name: 'roleId' })
+  role: Role;
 
   @CreateDateColumn()
   createdAt: Date;

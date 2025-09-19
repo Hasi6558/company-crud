@@ -2,7 +2,7 @@ import {
   Entity,
   PrimaryGeneratedColumn,
   Column,
-  ManyToMany,
+  OneToMany,
   CreateDateColumn,
   UpdateDateColumn,
 } from 'typeorm';
@@ -19,8 +19,8 @@ export class Role {
   @Column({ nullable: true })
   description: string;
 
-  // Inverse side of Many-to-Many with Users
-  @ManyToMany(() => User, (u) => u.roles)
+  // One role can have many users
+  @OneToMany(() => User, (user) => user.role)
   users: User[];
 
   @Column('simple-array', { nullable: true, default: () => "''" })

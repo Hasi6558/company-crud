@@ -21,17 +21,13 @@ export class AuthService {
     return user;
   }
 
-  signToken(user: {
-    id: string;
-    email: string;
-    roles: { name: string; permissions?: string[] }[];
-  }) {
-    const permissions = user.roles?.flatMap((role) => role.permissions || []) || [];
+  signToken(user: { id: string; email: string; role: { name: string; permissions?: string[] } }) {
+    const permissions = user.role?.permissions || [];
 
     const payload = {
       sub: user.id,
       email: user.email,
-      roles: user.roles?.map((r) => r.name) || [],
+      roles: user.role?.name ? [user.role.name] : [], // Convert single role to array for consistency
       permissions,
     };
     const accessToken = this.jwtService.sign(payload);
