@@ -1,5 +1,5 @@
 'use client';
-import React from 'react';
+import * as React from 'react';
 import {
   UploadOutlined,
   UserOutlined,
@@ -10,7 +10,7 @@ import { Layout, Menu, theme } from 'antd';
 import { Button } from 'antd';
 import Cookies from 'js-cookie';
 import router from 'next/router';
-import api from '../lib/axios';
+import { useAuth } from '@/contexts/AuthContext';
 const { Header, Content, Footer, Sider } = Layout;
 
 const items = [
@@ -36,18 +36,17 @@ const items = [
 //   label,
 // }));
 
-const App: React.FC = () => {
+const DashboardPage: React.FC = () => {
+  const { user, logout, isLoading } = useAuth();
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+  console.log('Authenticated user:', user);
   const {
     token: { colorBgContainer, borderRadiusLG },
   } = theme.useToken();
   const handleLogout = async () => {
-    try {
-      await api.post('/auth/logout');
-    } catch (e) {
-      console.error('Logout failed', e);
-    } finally {
-      window.location.href = '/login';
-    }
+    await logout();
   };
 
   return (
@@ -73,7 +72,12 @@ const App: React.FC = () => {
         </div>
       </Sider>
       <Layout>
-        <Header style={{ padding: 0, background: colorBgContainer }} />
+        <Header style={{ padding: 0, background: colorBgContainer }}>
+          <div className="pb-4 pr-12 flex justify-end space-x-4 ">
+            <div className="text-md ">Hi,</div>
+            <div className="text-md ">{user?.fullName}</div>
+          </div>
+        </Header>
         <Content style={{ margin: '24px 16px 0' }}>
           <div
             style={{
@@ -94,4 +98,4 @@ const App: React.FC = () => {
   );
 };
 
-export default App;
+export default DashboardPage;

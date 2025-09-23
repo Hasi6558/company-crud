@@ -5,6 +5,7 @@ import app from '../lib/axios';
 import { useRouter } from 'next/navigation';
 import { Alert } from 'antd';
 import type { AxiosError } from 'axios';
+import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
@@ -12,6 +13,7 @@ const LoginPage = () => {
   const [password, setPassword] = useState('');
   const router = useRouter();
   const [error, setError] = useState('');
+  const { refreshUser } = useAuth();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -22,6 +24,8 @@ const LoginPage = () => {
       const response = await app.post('/auth/login', { email, password });
 
       if (response.status === 201) {
+        // Refresh user data after successful login
+        await refreshUser();
         router.push('/dashboard');
       }
     } catch (error: unknown) {
@@ -46,19 +50,21 @@ const LoginPage = () => {
         </div>
         <div>{error && <Alert message={error} type="error" showIcon closable />}</div>
         <div>
-          <form action="" onSubmit={handleSubmit} className="mt-8 space-y-6">
-            <Input
-              type="email"
-              name="email"
-              placeholder="Email"
-              onChange={(e) => setEmail(e.target.value)}
-            />
-            <Input
-              type="password"
-              name="password"
-              placeholder="Password"
-              onChange={(e) => setPassword(e.target.value)}
-            />
+          <form action="" onSubmit={handleSubmit} className="mt-8">
+            <div className="flex flex-col space-y-4">
+              <Input
+                type="email"
+                name="email"
+                placeholder="Email"
+                onChange={(e) => setEmail(e.target.value)}
+              />
+              <Input
+                type="password"
+                name="password"
+                placeholder="Password"
+                onChange={(e) => setPassword(e.target.value)}
+              />
+            </div>
           </form>
         </div>
         <div>
