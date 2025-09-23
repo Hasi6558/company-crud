@@ -30,6 +30,12 @@ export class AuthController {
     return { message: 'Login successful' }; // still return something to the client
   }
 
+  @Post('logout')
+  logout(@Res({ passthrough: true }) response: Response) {
+    response.clearCookie('token');
+    return { message: 'Logout successful' };
+  }
+
   @UseGuards(AuthGuard)
   @Get('me')
   me(@Req() req: AuthenticatedRequest) {
