@@ -1,0 +1,34 @@
+import {
+  Entity,
+  PrimaryGeneratedColumn,
+  Column,
+  OneToMany,
+  CreateDateColumn,
+  UpdateDateColumn,
+} from 'typeorm';
+import { User } from '../users/user.entity';
+
+@Entity('roles')
+export class Role {
+  @PrimaryGeneratedColumn('uuid')
+  id: string;
+
+  @Column({ unique: true })
+  name: string; // e.g. "admin", "manager", "user"
+
+  @Column({ nullable: true })
+  description: string;
+
+  // One role can have many users
+  @OneToMany(() => User, (user) => user.role)
+  users: User[];
+
+  @Column('simple-array', { nullable: true, default: () => "''" })
+  permissions: string[];
+
+  @CreateDateColumn()
+  createdAt: Date;
+
+  @UpdateDateColumn()
+  updatedAt: Date;
+}
