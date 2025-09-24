@@ -48,4 +48,29 @@ export class UsersService {
       relations: ['role'], // Changed from 'roles' to 'role'
     });
   }
+  async update(id: string, dto: Partial<CreateUserDto>): Promise<User> {
+    const user = await this.repo.findOneBy({ id });
+    if (!user) {
+      throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    if (dto.roleId) {
+      const role = await this.roleRepo.findOne({
+        where: { id: dto.roleId },
+      });
+      if (!role) {
+        throw new NotFoundException(`Role with ID ${dto.roleId} not found`);
+      }
+      user.role = role; // Update the single role
+    }
+
+    if (dto.email !== undefined) {
+      user.email = dto.email;
+    }
+    if (dto.fullName !== undefined) {
+      user.fullName = dto.fullName;
+    }
+
+    return this.repo.save(user);
+  }
 }
