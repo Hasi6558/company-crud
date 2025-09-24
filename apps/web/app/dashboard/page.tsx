@@ -12,6 +12,7 @@ import { Button } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '../lib/axios';
 import { Form } from 'antd';
+import Password from 'antd/es/input/Password';
 const { Header, Content, Footer, Sider } = Layout;
 
 const items = [
@@ -67,7 +68,41 @@ const DashboardPage: React.FC = () => {
   const handleLogout = async () => {
     await logout();
   };
-  const [form] = Form.useForm();
+  const [userEditForm] = Form.useForm();
+  const [userAddForm] = Form.useForm();
+
+  const handleAddUser = async (values: {
+    fullname: string;
+    email: string;
+    password: string;
+    role: string;
+  }) => {
+    try {
+      const selectedRole = allRoles.find(
+        (role) => role.name.toLowerCase() === values.role.toLocaleLowerCase(),
+      );
+      if (!selectedRole) {
+        console.log('role Not found !', values.role);
+        return;
+      }
+      const sendingData = {
+        fullName: values.fullname,
+        email: values.email,
+        roleId: selectedRole.id,
+      };
+      console.log(sendingData);
+      const userResponse = await api.post('/users', sendingData);
+      const passwordResponse = await api.post(`users/${userResponse.data.id}/password`, {
+        password: values.password,
+      });
+      console.log('user added successfully');
+      const refreshedUsers = await api.get('/users');
+      setAllUsers(refreshedUsers.data);
+      userAddForm.resetFields();
+    } catch (e) {
+      console.log('Error', e);
+    }
+  };
   const handleUserUpdate = async (values: { fullname: string; email: string; role: string }) => {
     try {
       console.log('Updating user with ID:', selectedUser?.id);
@@ -118,13 +153,13 @@ const DashboardPage: React.FC = () => {
   // Reset form when selectedUser changes
   useEffect(() => {
     if (selectedUser && isEditModalOpen) {
-      form.setFieldsValue({
+      userEditForm.setFieldsValue({
         fullname: selectedUser.fullName,
         email: selectedUser.email,
         role: selectedUser.role?.name,
       });
     }
-  }, [selectedUser, isEditModalOpen, form]);
+  }, [selectedUser, isEditModalOpen, userEditForm]);
 
   useEffect(() => {
     const LoadAllUsers = async () => {
@@ -318,7 +353,7 @@ const DashboardPage: React.FC = () => {
                   <div>
                     <h1 className="text-lg">Edit User info</h1>
                     <Form
-                      form={form}
+                      form={userEditForm}
                       key={selectedUser.id}
                       layout="horizontal"
                       name="edit user"
@@ -370,17 +405,21 @@ const DashboardPage: React.FC = () => {
                   minHeight: 360,
                   background: colorBgContainer,
                   borderRadius: borderRadiusLG,
+                  display: 'flex',
+                  justifyContent: 'center',
+                  alignItems: 'center',
                 }}
               >
-                <div className="text-center">Add User Form Coming Soon!</div>
                 <Form
+                  form={userAddForm}
                   layout="horizontal"
                   name="add user"
                   labelCol={{ span: 8 }}
-                  labelAlign="left"
+                  labelAlign="right"
                   wrapperCol={{ span: 16 }}
                   colon={false}
-                  style={{ maxWidth: 600 }}
+                  style={{ minWidth: 500 }}
+                  onFinish={handleAddUser}
                 >
                   <Form.Item label="Full Name :" name="fullname" rules={[{ required: true }]}>
                     <Input />
@@ -389,16 +428,21 @@ const DashboardPage: React.FC = () => {
                     <Input />
                   </Form.Item>
                   <Form.Item label="Password :" name="password" rules={[{ required: true }]}>
-                    <Input type="password" />
+                    <Password />
                   </Form.Item>
                   <Form.Item label="Role :" name="role" rules={[{ required: true }]}>
-                    <Select placeholder="Select the role">
+                    <Select placeholder="Select the role" style={{ width: '40%' }}>
                       {allRoles.map((role) => (
                         <Select.Option key={role.id} value={role.name}>
                           {role.name}
                         </Select.Option>
                       ))}
                     </Select>
+                  </Form.Item>
+                  <Form.Item className="flex justify-end">
+                    <Button type="primary" htmlType="submit">
+                      Add
+                    </Button>
                   </Form.Item>
                 </Form>
               </div>
