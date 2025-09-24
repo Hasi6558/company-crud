@@ -8,6 +8,7 @@ import {
   LogoutOutlined,
   EditOutlined,
   DeleteOutlined,
+  SearchOutlined,
 } from '@ant-design/icons';
 import { Layout, Menu, theme, Table, Tag, Modal, Input, Select, Space } from 'antd';
 import { Button } from 'antd';
@@ -15,8 +16,9 @@ import { useAuth } from '@/contexts/AuthContext';
 import api from '../lib/axios';
 import { Form } from 'antd';
 import Password from 'antd/es/input/Password';
-const { Header, Content, Footer, Sider } = Layout;
 
+const { Header, Content, Footer, Sider } = Layout;
+const { Search } = Input;
 const items = [
   {
     key: '1',
@@ -29,11 +31,6 @@ const items = [
     label: 'Add Users',
   },
 ];
-// const items = ['Dashboard', 'Users', 'Settings'].map((label, index) => ({
-//   key: String(index + 1),
-//   icon: React.createElement(icon),
-//   label,
-// }));
 
 interface User {
   id: string;
@@ -56,6 +53,7 @@ const DashboardPage: React.FC = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserDeleteModalOpen, setIsUserDeleteModalOpen] = useState(false);
   const [selectedUserToDelete, setSelectedUserToDelete] = useState<User | null>(null);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
 
   const showModal = (user: User) => {
     setSelectedUser(user);
@@ -132,7 +130,6 @@ const DashboardPage: React.FC = () => {
         return;
       }
 
-      // Transform data to match backend DTO
       const updateData = {
         fullName: values.fullname,
         email: values.email,
@@ -263,6 +260,13 @@ const DashboardPage: React.FC = () => {
       ),
     },
   ];
+  const handleSearch = (value: string) => {
+    const resultUsers = allUsers.filter((user) =>
+      user.fullName.toLowerCase().includes(value.toLowerCase()),
+    );
+    console.log('Fil', resultUsers);
+    setFilteredUsers(resultUsers);
+  };
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
@@ -313,8 +317,15 @@ const DashboardPage: React.FC = () => {
                   borderRadius: borderRadiusLG,
                 }}
               >
+                <div className="max-w-xs mb-4">
+                  <Input
+                    placeholder="Search users by name..."
+                    prefix={<SearchOutlined style={{ color: '#aaa' }} />}
+                    onChange={(e) => handleSearch(e.target.value)}
+                  />
+                </div>
                 <Table
-                  dataSource={allUsers}
+                  dataSource={filteredUsers.length > 0 ? filteredUsers : allUsers}
                   columns={columns}
                   onRow={(record) => ({
                     onClick: () => showModal(record),
