@@ -6,8 +6,10 @@ import {
   UserOutlined,
   VideoCameraOutlined,
   LogoutOutlined,
+  EditOutlined,
+  DeleteOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, theme, Table, Tag, Modal, Input, Select } from 'antd';
+import { Layout, Menu, theme, Table, Tag, Modal, Input, Select, Space } from 'antd';
 import { Button } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '../lib/axios';
@@ -52,6 +54,8 @@ const DashboardPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isUserDeleteModalOpen, setIsUserDeleteModalOpen] = useState(false);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<User | null>(null);
 
   const showModal = (user: User) => {
     setSelectedUser(user);
@@ -198,6 +202,10 @@ const DashboardPage: React.FC = () => {
     setSelectedUser(user);
     console.log('Edit user:', user);
   };
+  const handleDeleteUser = async (user: User) => {
+    setIsUserDeleteModalOpen(true);
+    setSelectedUserToDelete(user);
+  };
   const columns = [
     {
       title: 'Full Name',
@@ -232,15 +240,26 @@ const DashboardPage: React.FC = () => {
       title: 'Action',
       key: 'action',
       render: (_: unknown, record: User) => (
-        <Button
-          type="link"
-          onClick={(e) => {
-            e.stopPropagation(); // Prevent row click!
-            handleEditUser(record);
-          }}
-        >
-          Edit
-        </Button>
+        <div>
+          <Button
+            type="link"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row click!
+              handleEditUser(record);
+            }}
+          >
+            <EditOutlined />
+          </Button>
+          <Button
+            type="link"
+            onClick={(e) => {
+              e.stopPropagation(); // Prevent row click!
+              handleDeleteUser(record);
+            }}
+          >
+            <DeleteOutlined />
+          </Button>
+        </div>
       ),
     },
   ];
@@ -393,6 +412,28 @@ const DashboardPage: React.FC = () => {
                     </Form>
                   </div>
                 )}
+              </Modal>
+              <Modal
+                title="Confirm Deletion"
+                open={isUserDeleteModalOpen}
+                onOk={async () => {
+                  try {
+                    await api.delete(`/users/${selectedUserToDelete?.id}`);
+                    const refreshedUsers = await api.get('/users');
+                    setAllUsers(refreshedUsers.data);
+                    setIsUserDeleteModalOpen(false);
+                  } catch (e) {
+                    console.log('Error deleting user:', e);
+                  }
+                }}
+                onCancel={() => setIsUserDeleteModalOpen(false)}
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+              >
+                <p>
+                  Are you sure you want to delete user{' '}
+                  <strong>{selectedUserToDelete?.fullName}</strong>?
+                </p>
               </Modal>
             </>
           )}
