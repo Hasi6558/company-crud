@@ -30,6 +30,11 @@ const items = [
     icon: <VideoCameraOutlined />,
     label: 'Add Users',
   },
+  {
+    key: '3',
+    icon: <VideoCameraOutlined />,
+    label: 'Profiles',
+  },
 ];
 
 interface User {
@@ -38,9 +43,11 @@ interface User {
   fullName: string;
   email: string;
   role?: {
+    id?: string;
     name?: string;
+    permissions?: string[];
   };
-  createdAt: Date;
+  createdAt?: Date | string;
 }
 
 const DashboardPage: React.FC = () => {
@@ -195,9 +202,10 @@ const DashboardPage: React.FC = () => {
   }
 
   const handleEditUser = (user: User) => {
+    console.log('handleEditUser called with:', user);
     setIsEditModalOpen(true);
     setSelectedUser(user);
-    console.log('Edit user:', user);
+    console.log('Modal should open now, isEditModalOpen:', true);
   };
   const handleDeleteUser = async (user: User) => {
     setIsUserDeleteModalOpen(true);
@@ -285,7 +293,7 @@ const DashboardPage: React.FC = () => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['2']}
+          defaultSelectedKeys={['3']}
           items={items}
           selectedKeys={[selectedKey]}
           onSelect={({ key }) => setSelectedKey(key)}
@@ -374,56 +382,7 @@ const DashboardPage: React.FC = () => {
                   </div>
                 )}
               </Modal>
-              <Modal
-                open={isEditModalOpen}
-                footer={null}
-                onCancel={() => setIsEditModalOpen(false)}
-              >
-                {selectedUser && (
-                  <div>
-                    <h1 className="text-lg">Edit User info</h1>
-                    <Form
-                      form={userEditForm}
-                      key={selectedUser.id}
-                      layout="horizontal"
-                      name="edit user"
-                      labelCol={{ span: 8 }}
-                      labelAlign="left"
-                      labelWrap
-                      wrapperCol={{ span: 16 }}
-                      colon={false}
-                      style={{ maxWidth: 600 }}
-                      initialValues={{
-                        fullname: selectedUser.fullName,
-                        email: selectedUser.email,
-                        role: selectedUser.role?.name,
-                      }}
-                      onFinish={handleUserUpdate}
-                    >
-                      <Form.Item label="Full Name :" name="fullname" rules={[{ required: true }]}>
-                        <Input />
-                      </Form.Item>
-                      <Form.Item label="Email :" name="email">
-                        <Input />
-                      </Form.Item>
-                      <Form.Item label="Role :" name="role" rules={[{ required: true }]}>
-                        <Select placeholder="Select Role">
-                          {allRoles.map((role) => (
-                            <Select.Option key={role.id} value={role.name}>
-                              {role.name}
-                            </Select.Option>
-                          ))}
-                        </Select>
-                      </Form.Item>
-                      <Form.Item className="flex justify-end">
-                        <Button type="primary" htmlType="submit" className="px-8">
-                          Save
-                        </Button>
-                      </Form.Item>
-                    </Form>
-                  </div>
-                )}
-              </Modal>
+
               <Modal
                 title="Confirm Deletion"
                 open={isUserDeleteModalOpen}
@@ -500,7 +459,111 @@ const DashboardPage: React.FC = () => {
               </div>
             </>
           )}
+          {selectedKey === '3' && (
+            <>
+              <h2 className="text-lg">User Profile</h2>
+              <div
+                style={{
+                  padding: 24,
+                  minHeight: 360,
+                  maxWidth: 500,
+                  margin: 'auto',
+                  background: colorBgContainer,
+                  borderRadius: borderRadiusLG,
+                }}
+              >
+                <div className="flex space-x-4 items-center justify-center mt-4">
+                  <div className="flex flex-col items-center space-y-8">
+                    <div className="flex flex-col items-center space-x-4">
+                      <div>
+                        <UserOutlined style={{ fontSize: 100 }} />
+                      </div>
+                      <div>
+                        <div className="flex mb-2 mt-4">
+                          <span className="pr-2 font-semibold text-md">Full Name:</span>
+                          <span className="pr-2 font-semibold text-md ">{user?.fullName}</span>
+                        </div>
+                        <div className="flex mb-2">
+                          <span className="pr-2 font-semibold text-md">Email:</span>
+                          <span className="pr-2 font-semibold text-md">{user?.email}</span>
+                        </div>
+                        <div className="flex">
+                          <span className="pr-2 font-semibold text-md">Role :</span>
+                          <span className="pr-2 font-semibold text-md">{user?.role?.name}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div>
+                      <Button
+                        type="primary"
+                        className="px-8"
+                        onClick={() => {
+                          console.log('Edit Profile clicked, user:', user);
+                          if (user) {
+                            handleEditUser(user);
+                          } else {
+                            console.log('No user found');
+                          }
+                        }}
+                      >
+                        Edit Profile
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </>
+          )}
         </Content>
+
+        {/* Edit Modal - Available for all tabs */}
+        <Modal open={isEditModalOpen} footer={null} onCancel={() => setIsEditModalOpen(false)}>
+          {selectedUser && (
+            <div>
+              <h1 className="text-lg">Edit User info</h1>
+              <Form
+                form={userEditForm}
+                key={selectedUser.id}
+                layout="horizontal"
+                name="edit user"
+                labelCol={{ span: 8 }}
+                labelAlign="left"
+                labelWrap
+                wrapperCol={{ span: 16 }}
+                colon={false}
+                style={{ maxWidth: 600 }}
+                initialValues={{
+                  fullname: selectedUser.fullName,
+                  email: selectedUser.email,
+                  role: selectedUser.role?.name,
+                }}
+                onFinish={handleUserUpdate}
+              >
+                <Form.Item label="Full Name :" name="fullname" rules={[{ required: true }]}>
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Email :" name="email">
+                  <Input />
+                </Form.Item>
+                <Form.Item label="Role :" name="role" rules={[{ required: true }]}>
+                  <Select placeholder="Select Role">
+                    {allRoles.map((role) => (
+                      <Select.Option key={role.id} value={role.name}>
+                        {role.name}
+                      </Select.Option>
+                    ))}
+                  </Select>
+                </Form.Item>
+                <Form.Item className="flex justify-end">
+                  <Button type="primary" htmlType="submit" className="px-8">
+                    Save
+                  </Button>
+                </Form.Item>
+              </Form>
+            </div>
+          )}
+        </Modal>
+
         <Footer style={{ textAlign: 'center' }}>
           Ant Design ©{new Date().getFullYear()} Created by Ant UED
         </Footer>

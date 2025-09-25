@@ -6,13 +6,15 @@ import api from '../app/lib/axios';
 
 interface User {
   id: string;
-  email: string;
+  key?: React.Key;
   fullName: string;
-  role: {
-    id: string;
-    name: string;
-    permissions: string[];
+  email: string;
+  role?: {
+    id?: string;
+    name?: string;
+    permissions?: string[];
   };
+  createdAt?: Date | string;
 }
 
 interface AuthContextType {
