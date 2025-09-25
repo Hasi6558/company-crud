@@ -10,15 +10,40 @@ import {
   DeleteOutlined,
   SearchOutlined,
 } from '@ant-design/icons';
-import { Layout, Menu, theme, Table, Tag, Modal, Input, Select, Space } from 'antd';
+import {
+  Layout,
+  Menu,
+  theme,
+  Table,
+  Tag,
+  Modal,
+  Input,
+  Select,
+  Space,
+  Checkbox,
+  GetProp,
+} from 'antd';
+import type { CheckboxOptionType } from 'antd/es/checkbox/Group';
 import { Button } from 'antd';
 import { useAuth } from '@/contexts/AuthContext';
 import api from '../lib/axios';
 import { Form } from 'antd';
 import Password from 'antd/es/input/Password';
+import { permission } from 'process';
 
 const { Header, Content, Footer, Sider } = Layout;
 const { Search } = Input;
+const availablePermission = [
+  'read:users',
+  'read:user',
+  'create:users',
+  'update:users',
+  'delete:users',
+  'read:roles',
+  'create:roles',
+  'update:roles',
+  'delete:roles',
+];
 const items = [
   {
     key: '1',
@@ -35,7 +60,14 @@ const items = [
     icon: <VideoCameraOutlined />,
     label: 'Profiles',
   },
+  {
+    key: '4',
+    icon: <VideoCameraOutlined />,
+    label: 'Roles',
+  },
 ];
+
+//role permission list
 
 interface User {
   id: string;
@@ -49,6 +81,23 @@ interface User {
   };
   createdAt?: Date | string;
 }
+const permissionOptions: CheckboxOptionType[] = [
+  { label: 'Read all users', value: 'read:users' },
+  { label: 'Read user', value: 'read:user' },
+  { label: 'Create users', value: 'create:users' },
+  { label: 'Update users', value: 'update:users' },
+  { label: 'Delete users', value: 'delete:users' },
+  { label: 'Read roles', value: 'read:roles' },
+  { label: 'Create roles', value: 'create:roles' },
+  { label: 'Update roles', value: 'update:roles' },
+  { label: 'Delete roles', value: 'delete:roles' },
+];
+interface Roles {
+  id: string;
+  key?: React.Key;
+  name: string;
+  permissions?: string[];
+}
 
 const DashboardPage: React.FC = () => {
   const [selectedKey, setSelectedKey] = useState('1');
@@ -56,14 +105,30 @@ const DashboardPage: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allRoles, setAllRoles] = useState<{ id: string; name: string }[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserToEdit, setSelectedUserToEdit] = useState<User | null>(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isUserDeleteModalOpen, setIsUserDeleteModalOpen] = useState(false);
   const [selectedUserToDelete, setSelectedUserToDelete] = useState<User | null>(null);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [selectedRoleToDelete, setSelectedRoleToDelete] = useState<Roles | null>(null);
+  const [isRoleDeleteModalOpen, setIsRoleDeleteModalOpen] = useState(false);
+  const [isEditPermissionsModalOpen, setIsEditPermissionsModalOpen] = useState(false);
+  const [editPermissionsRole, setEditPermissionsRole] = useState<Roles | null>(null);
+  const [selectedPermissionsToAdd, setSelectedPermissionsToAdd] = useState<string[]>([]);
+
+  useEffect(() => {
+    console.log('consoleee:', editPermissionsRole);
+  }, [editPermissionsRole]);
+
+  const handleEditPermissions = (role: Roles) => {
+    console.log('Editing permissions for role:', role);
+    setSelectedPermissionsToAdd(role.permissions || []);
+    setEditPermissionsRole(role);
+    setIsEditPermissionsModalOpen(true);
+  };
 
   const showModal = (user: User) => {
-    setSelectedUser(user);
+    setSelectedUserToEdit(user);
     setIsModalOpen(true);
   };
   const handleOk = () => {
@@ -77,6 +142,36 @@ const DashboardPage: React.FC = () => {
   const handleLogout = async () => {
     await logout();
   };
+
+  const onChangePermissionCheckbox: GetProp<typeof Checkbox.Group, 'onChange'> = (
+    checkedValues,
+  ) => {
+    console.log('checked = ', checkedValues);
+    setSelectedPermissionsToAdd(checkedValues as string[]);
+  };
+
+  const handleSavePermissions = async () => {
+    if (!editPermissionsRole) return;
+
+    try {
+      console.log('Saving permissions for role:', editPermissionsRole.name);
+      console.log('New permissions:', selectedPermissionsToAdd);
+
+      await api.patch(`/roles/${editPermissionsRole.id}`, {
+        permissions: selectedPermissionsToAdd,
+      });
+
+      // Refresh roles list
+      const refreshedRoles = await api.get('/roles');
+      setAllRoles(refreshedRoles.data);
+
+      setIsEditPermissionsModalOpen(false);
+      console.log('Permissions updated successfully');
+    } catch (error) {
+      console.error('Failed to update permissions:', error);
+    }
+  };
+
   const [userEditForm] = Form.useForm();
   const [userAddForm] = Form.useForm();
 
@@ -101,10 +196,10 @@ const DashboardPage: React.FC = () => {
       };
       console.log(sendingData);
       const userResponse = await api.post('/users', sendingData);
-      const passwordResponse = await api.post(`users/${userResponse.data.id}/password`, {
+      await api.post(`users/${userResponse.data.id}/password`, {
         password: values.password,
       });
-      console.log('user added successfully');
+      console.log('User added successfully');
       const refreshedUsers = await api.get('/users');
       setAllUsers(refreshedUsers.data);
       userAddForm.resetFields();
@@ -112,9 +207,10 @@ const DashboardPage: React.FC = () => {
       console.log('Error', e);
     }
   };
+
   const handleUserUpdate = async (values: { fullname: string; email: string; role: string }) => {
     try {
-      console.log('Updating user with ID:', selectedUser?.id);
+      console.log('Updating user with ID:', selectedUserToEdit?.id);
       console.log('Form values:', values);
       console.log('Available roles:', allRoles);
 
@@ -145,7 +241,7 @@ const DashboardPage: React.FC = () => {
 
       console.log('Sending to backend:', updateData);
 
-      const response = await api.patch(`/users/update/${selectedUser?.id}`, updateData);
+      const response = await api.patch(`/users/update/${selectedUserToEdit?.id}`, updateData);
       console.log('Backend response:', response.data);
 
       setIsEditModalOpen(false);
@@ -160,14 +256,14 @@ const DashboardPage: React.FC = () => {
 
   // Reset form when selectedUser changes
   useEffect(() => {
-    if (selectedUser && isEditModalOpen) {
+    if (selectedUserToEdit && isEditModalOpen) {
       userEditForm.setFieldsValue({
-        fullname: selectedUser.fullName,
-        email: selectedUser.email,
-        role: selectedUser.role?.name,
+        fullname: selectedUserToEdit.fullName,
+        email: selectedUserToEdit.email,
+        role: selectedUserToEdit.role?.name,
       });
     }
-  }, [selectedUser, isEditModalOpen, userEditForm]);
+  }, [selectedUserToEdit, isEditModalOpen, userEditForm]);
 
   useEffect(() => {
     const LoadAllUsers = async () => {
@@ -204,12 +300,22 @@ const DashboardPage: React.FC = () => {
   const handleEditUser = (user: User) => {
     console.log('handleEditUser called with:', user);
     setIsEditModalOpen(true);
-    setSelectedUser(user);
+    setSelectedUserToEdit(user);
     console.log('Modal should open now, isEditModalOpen:', true);
   };
   const handleDeleteUser = async (user: User) => {
+    console.log('handleDeleteUser called with user:', user);
+    console.log('User ID to delete:', user.id);
     setIsUserDeleteModalOpen(true);
     setSelectedUserToDelete(user);
+  };
+  const handleDeleteRole = async (role: Roles) => {
+    setIsRoleDeleteModalOpen(true);
+    setSelectedRoleToDelete(role);
+  };
+  const getPermissionLabel = (permissionValue: string) => {
+    const option = permissionOptions.find((perm) => perm.value === permissionValue);
+    return option ? option.label : permissionValue;
   };
   const columns = [
     {
@@ -259,7 +365,59 @@ const DashboardPage: React.FC = () => {
             type="link"
             onClick={(e) => {
               e.stopPropagation(); // Prevent row click!
+              console.log('Delete button clicked for user:', record);
               handleDeleteUser(record);
+            }}
+          >
+            <DeleteOutlined />
+          </Button>
+        </div>
+      ),
+    },
+  ];
+
+  const RoleColumns = [
+    {
+      title: 'Role Name',
+      dataIndex: 'name',
+      key: 'name',
+    },
+    {
+      title: 'Available permissions',
+      dataIndex: 'permissions',
+      key: 'permissions',
+      render: (permissions: string[], record: Roles) => (
+        <div className="flex items-center space-x-4 ">
+          <div>
+            <ul>
+              {permissions && permissions.length > 0 ? (
+                permissions.map((permission, index) => (
+                  <li key={index}>{getPermissionLabel(permission)}</li>
+                ))
+              ) : (
+                <p>No Permissions for this role</p>
+              )}
+            </ul>
+          </div>
+          <div>
+            <Button type="link" onClick={() => handleEditPermissions(record)}>
+              <EditOutlined />
+            </Button>
+          </div>
+        </div>
+      ),
+    },
+
+    {
+      title: 'Delete',
+      key: 'action',
+      render: (_: unknown, record: Roles) => (
+        <div>
+          <Button
+            type="link"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleDeleteRole(record);
             }}
           >
             <DeleteOutlined />
@@ -293,7 +451,7 @@ const DashboardPage: React.FC = () => {
         <Menu
           theme="dark"
           mode="inline"
-          defaultSelectedKeys={['3']}
+          defaultSelectedKeys={['4']}
           items={items}
           selectedKeys={[selectedKey]}
           onSelect={({ key }) => setSelectedKey(key)}
@@ -349,7 +507,7 @@ const DashboardPage: React.FC = () => {
                 ]}
                 onCancel={() => setIsModalOpen(false)}
               >
-                {selectedUser && (
+                {selectedUserToEdit && (
                   <div>
                     <h1 className="text-lg">User info</h1>
                     <div className="flex space-x-4 items-center mt-4">
@@ -359,21 +517,21 @@ const DashboardPage: React.FC = () => {
                       <div>
                         <div className="flex">
                           <span className="pr-2">Full Name:</span>
-                          <span>{selectedUser.fullName}</span>
+                          <span>{selectedUserToEdit.fullName}</span>
                         </div>
                         <div className="flex">
                           <span className="pr-2">Email:</span>
-                          <span>{selectedUser.email}</span>
+                          <span>{selectedUserToEdit.email}</span>
                         </div>
                         <div className="flex">
                           <span className="pr-2">Role :</span>
-                          <span>{selectedUser.role?.name}</span>
+                          <span>{selectedUserToEdit.role?.name}</span>
                         </div>
                         <div className="flex">
                           <span className="pr-2">Registered Date :</span>
                           <span>
-                            {selectedUser.createdAt
-                              ? new Date(selectedUser.createdAt).toLocaleString()
+                            {selectedUserToEdit.createdAt
+                              ? new Date(selectedUserToEdit.createdAt).toLocaleString()
                               : ''}
                           </span>
                         </div>
@@ -388,6 +546,8 @@ const DashboardPage: React.FC = () => {
                 open={isUserDeleteModalOpen}
                 onOk={async () => {
                   try {
+                    console.log('About to delete user:', selectedUserToDelete);
+                    console.log('Delete API call with ID:', selectedUserToDelete?.id);
                     await api.delete(`/users/${selectedUserToDelete?.id}`);
                     const refreshedUsers = await api.get('/users');
                     setAllUsers(refreshedUsers.data);
@@ -514,16 +674,53 @@ const DashboardPage: React.FC = () => {
               </div>
             </>
           )}
+          {selectedKey === '4' && (
+            <>
+              <h2 className="text-lg">User Roles</h2>
+              <div
+                style={{
+                  padding: 24,
+                  minHeight: 360,
+                  background: colorBgContainer,
+                  borderRadius: borderRadiusLG,
+                }}
+              >
+                <Table dataSource={allRoles} columns={RoleColumns} rowKey="id" />
+              </div>
+              <Modal
+                title="Confirm Deletion"
+                open={isRoleDeleteModalOpen}
+                onOk={async () => {
+                  try {
+                    await api.delete(`/roles/${selectedRoleToDelete?.id}`);
+                    const refreshedRoles = await api.get('/roles');
+                    setAllRoles(refreshedRoles.data);
+                    setIsRoleDeleteModalOpen(false);
+                  } catch (e) {
+                    console.log('Error deleting role:', e);
+                  }
+                }}
+                onCancel={() => setIsRoleDeleteModalOpen(false)}
+                okText="Delete"
+                okButtonProps={{ danger: true }}
+              >
+                <p>
+                  Are you sure you want to delete role <strong>{selectedRoleToDelete?.name}</strong>
+                  ?
+                </p>
+              </Modal>
+            </>
+          )}
         </Content>
 
         {/* Edit Modal - Available for all tabs */}
         <Modal open={isEditModalOpen} footer={null} onCancel={() => setIsEditModalOpen(false)}>
-          {selectedUser && (
+          {selectedUserToEdit && (
             <div>
               <h1 className="text-lg">Edit User info</h1>
               <Form
                 form={userEditForm}
-                key={selectedUser.id}
+                key={selectedUserToEdit.id}
                 layout="horizontal"
                 name="edit user"
                 labelCol={{ span: 8 }}
@@ -533,9 +730,9 @@ const DashboardPage: React.FC = () => {
                 colon={false}
                 style={{ maxWidth: 600 }}
                 initialValues={{
-                  fullname: selectedUser.fullName,
-                  email: selectedUser.email,
-                  role: selectedUser.role?.name,
+                  fullname: selectedUserToEdit.fullName,
+                  email: selectedUserToEdit.email,
+                  role: selectedUserToEdit.role?.name,
                 }}
                 onFinish={handleUserUpdate}
               >
@@ -564,9 +761,22 @@ const DashboardPage: React.FC = () => {
           )}
         </Modal>
 
-        <Footer style={{ textAlign: 'center' }}>
-          Ant Design ©{new Date().getFullYear()} Created by Ant UED
-        </Footer>
+        <Modal
+          title="Edit Permissions"
+          open={isEditPermissionsModalOpen}
+          onOk={handleSavePermissions}
+          onCancel={() => setIsEditPermissionsModalOpen(false)}
+        >
+          <Form>
+            <Checkbox.Group
+              options={permissionOptions}
+              onChange={onChangePermissionCheckbox}
+              value={selectedPermissionsToAdd}
+            />
+          </Form>
+        </Modal>
+
+        <Footer style={{ textAlign: 'center' }}></Footer>
       </Layout>
     </Layout>
   );
