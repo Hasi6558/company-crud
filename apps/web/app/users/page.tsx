@@ -1,0 +1,197 @@
+'use client';
+import React, { useState, useEffect } from 'react';
+import { Modal, Button } from 'antd';
+import { UserOutlined } from '@ant-design/icons';
+import SharedLayout from '@/components/SharedLayout';
+import UserTable from '@/components/UserTable';
+import EditUserModal from '@/components/EditUserModal';
+import { User, Role } from '@/types';
+import api from '@/app/lib/axios';
+
+const UsersPage: React.FC = () => {
+  const [allUsers, setAllUsers] = useState<User[]>([]);
+  const [allRoles, setAllRoles] = useState<Role[]>([]);
+  const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [selectedUserToEdit, setSelectedUserToEdit] = useState<User | null>(null);
+  const [selectedUserToDelete, setSelectedUserToDelete] = useState<User | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+
+  useEffect(() => {
+    loadUsers();
+    loadRoles();
+  }, []);
+
+  const loadUsers = async () => {
+    try {
+      const response = await api.get('/users');
+      setAllUsers(response.data);
+    } catch (error) {
+      console.error('Failed to load users:', error);
+    }
+  };
+
+  const loadRoles = async () => {
+    try {
+      const response = await api.get('/roles');
+      setAllRoles(response.data);
+    } catch (error) {
+      console.error('Failed to load roles:', error);
+    }
+  };
+
+  const handleSearch = (value: string) => {
+    const filtered = allUsers.filter((user) =>
+      user.fullName.toLowerCase().includes(value.toLowerCase()),
+    );
+    setFilteredUsers(filtered);
+  };
+
+  const handleRowClick = (user: User) => {
+    setSelectedUser(user);
+    setIsModalOpen(true);
+  };
+
+  const handleEditUser = (user: User) => {
+    setSelectedUserToEdit(user);
+    setIsEditModalOpen(true);
+  };
+
+  const handleDeleteUser = (user: User) => {
+    setSelectedUserToDelete(user);
+    setIsDeleteModalOpen(true);
+  };
+
+  interface EditUserFormValues {
+    fullname: string;
+    email: string;
+    role: string;
+  }
+
+  const handleUserUpdate = async (values: EditUserFormValues) => {
+    try {
+      if (!selectedUserToEdit) return;
+
+      const selectedRole = allRoles.find(
+        (role) => role.name.toLowerCase() === values.role.toLowerCase(),
+      );
+
+      if (!selectedRole) {
+        console.error('Role not found:', values.role);
+        return;
+      }
+
+      const updateData = {
+        fullName: values.fullname,
+        email: values.email,
+        roleId: selectedRole.id,
+      };
+
+      await api.patch(`/users/update/${selectedUserToEdit.id}`, updateData);
+      setIsEditModalOpen(false);
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to update user:', error);
+    }
+  };
+
+  const handleDeleteConfirm = async () => {
+    try {
+      if (!selectedUserToDelete) return;
+
+      await api.delete(`/users/${selectedUserToDelete.id}`);
+      setIsDeleteModalOpen(false);
+      await loadUsers();
+    } catch (error) {
+      console.error('Failed to delete user:', error);
+    }
+  };
+
+  return (
+    <SharedLayout>
+      <div>
+        <h2 className="text-lg font-semibold mb-4">Users List</h2>
+
+        <UserTable
+          users={allUsers}
+          filteredUsers={filteredUsers}
+          onSearch={handleSearch}
+          onRowClick={handleRowClick}
+          onEditUser={handleEditUser}
+          onDeleteUser={handleDeleteUser}
+        />
+
+        {/* User Info Modal */}
+        <Modal
+          open={isModalOpen}
+          footer={[
+            <Button key="ok" type="primary" onClick={() => setIsModalOpen(false)}>
+              OK
+            </Button>,
+          ]}
+          onCancel={() => setIsModalOpen(false)}
+        >
+          {selectedUser && (
+            <div>
+              <h1 className="text-lg">User Info</h1>
+              <div className="flex space-x-4 items-center mt-4">
+                <div>
+                  <UserOutlined style={{ fontSize: 100 }} />
+                </div>
+                <div>
+                  <div className="flex">
+                    <span className="pr-2">Full Name:</span>
+                    <span>{selectedUser.fullName}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="pr-2">Email:</span>
+                    <span>{selectedUser.email}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="pr-2">Role:</span>
+                    <span>{selectedUser.role?.name}</span>
+                  </div>
+                  <div className="flex">
+                    <span className="pr-2">Registered Date:</span>
+                    <span>
+                      {selectedUser.createdAt
+                        ? new Date(selectedUser.createdAt).toLocaleString()
+                        : ''}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+        </Modal>
+
+        {/* Edit User Modal */}
+        <EditUserModal
+          open={isEditModalOpen}
+          user={selectedUserToEdit}
+          roles={allRoles}
+          onCancel={() => setIsEditModalOpen(false)}
+          onSave={handleUserUpdate}
+        />
+
+        {/* Delete Confirmation Modal */}
+        <Modal
+          title="Confirm Deletion"
+          open={isDeleteModalOpen}
+          onOk={handleDeleteConfirm}
+          onCancel={() => setIsDeleteModalOpen(false)}
+          okText="Delete"
+          okButtonProps={{ danger: true }}
+        >
+          <p>
+            Are you sure you want to delete user <strong>{selectedUserToDelete?.fullName}</strong>?
+          </p>
+        </Modal>
+      </div>
+    </SharedLayout>
+  );
+};
+
+export default UsersPage;

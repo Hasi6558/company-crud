@@ -436,33 +436,6 @@ const DashboardPage: React.FC = () => {
 
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Sider
-        breakpoint="lg"
-        collapsedWidth="0"
-        onBreakpoint={(broken) => {
-          console.log(broken);
-        }}
-        onCollapse={(collapsed, type) => {
-          console.log(collapsed, type);
-        }}
-        style={{ position: 'relative' }}
-      >
-        <div className="demo-logo-vertical" />
-        <Menu
-          theme="dark"
-          mode="inline"
-          defaultSelectedKeys={['4']}
-          items={items}
-          selectedKeys={[selectedKey]}
-          onSelect={({ key }) => setSelectedKey(key)}
-        />
-
-        <div style={{ position: 'absolute', bottom: 30, width: '100%', textAlign: 'center' }}>
-          <Button type="primary" onClick={handleLogout}>
-            Logout <LogoutOutlined className="ml-2" />
-          </Button>
-        </div>
-      </Sider>
       <Layout>
         <Header style={{ padding: 0, background: colorBgContainer }}>
           <div className="pb-4 pr-12 flex justify-end space-x-4 ">
