@@ -1,17 +1,21 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Button } from 'antd';
+import { Button, Card, Descriptions, Divider } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
 import EditUserModal from '@/components/EditUserModal';
 import { useAuth } from '@/contexts/AuthContext';
 import { Role } from '@/types';
 import api from '@/app/lib/axios';
+4;
+import { PERMISSION_LABELS } from '@/constants/permissions';
+import ChangePasswordModal from '@/components/ChangePasswordModal';
 
 const ProfilesPage: React.FC = () => {
   const { user } = useAuth();
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [isPasswordChangeModalOpen, setIsPasswordChangeModalOpen] = useState(false);
 
   useEffect(() => {
     loadRoles();
@@ -60,13 +64,69 @@ const ProfilesPage: React.FC = () => {
       console.error('Failed to update profile:', error);
     }
   };
+  const getPermissionLabel = (permission: string) => {
+    return PERMISSION_LABELS[permission] || permission;
+  };
+
+  //password change
+  const handlePasswordChange = () => {
+    setIsPasswordChangeModalOpen(true);
+  };
+
+  const changePassword = async (value: string) => {
+    if (!user) return;
+    try {
+      await api.patch(`users/${user.id}/password`, { newPassword: value });
+      console.log('Password changed successfully');
+    } catch (error) {
+      console.error('Failed to change password:', error);
+    } finally {
+      setIsPasswordChangeModalOpen(false);
+    }
+  };
 
   return (
     <SharedLayout>
       <div>
-        <h2 className="text-lg font-semibold mb-4">User Profile</h2>
+        <h2 className="text-2xl font-semibold mb-4">User Profile</h2>
+        <Card
+          title={
+            <div className="flex items-center gap-2 space-x-2">
+              <UserOutlined />
+              profile Information
+            </div>
+          }
+          extra={
+            <Button type="primary" className="px-8" onClick={handleEditProfile}>
+              Edit Profile
+            </Button>
+          }
+        >
+          <Descriptions column={1} bordered>
+            <Descriptions.Item label="Full Name">{user?.fullName}</Descriptions.Item>
+            <Descriptions.Item label="Email">{user?.email}</Descriptions.Item>
+            <Descriptions.Item label="Role">{user?.role?.name}</Descriptions.Item>
+            <Descriptions.Item label="Permissions">
+              <ul>
+                {user?.role?.permissions?.map((permission, index) => (
+                  <li key={index}>{getPermissionLabel(permission)}</li>
+                ))}
+              </ul>
+            </Descriptions.Item>
+          </Descriptions>
+        </Card>
+        <Card title="Security Settings">
+          <Button type="default" onClick={handlePasswordChange}>
+            Change Password
+          </Button>
+        </Card>
+        <ChangePasswordModal
+          open={isPasswordChangeModalOpen}
+          onCancel={() => setIsPasswordChangeModalOpen(false)}
+          changePassword={changePassword}
+        />
 
-        <div className="flex justify-center">
+        {/* <div className="flex justify-center">
           <div className="w-full max-w-lg p-8 bg-white rounded-lg" style={{ minHeight: 400 }}>
             <div className="flex flex-col items-center space-y-8">
               <div className="flex flex-col items-center">
@@ -95,7 +155,7 @@ const ProfilesPage: React.FC = () => {
               </div>
             </div>
           </div>
-        </div>
+        </div> */}
 
         {/* Edit Profile Modal */}
         <EditUserModal

@@ -1,12 +1,13 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Modal, Button } from 'antd';
-import { UserOutlined } from '@ant-design/icons';
+import { Modal, Button, Input } from 'antd';
+import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
 import UserTable from '@/components/UserTable';
 import EditUserModal from '@/components/EditUserModal';
 import { User, Role } from '@/types';
 import api from '@/app/lib/axios';
+import AddUserModal from '@/components/AddUserModal';
 
 const UsersPage: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -18,6 +19,7 @@ const UsersPage: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
+  const [isUserAddModalOpen, SetIsUserAddModalOpen] = useState(false);
 
   useEffect(() => {
     loadUsers();
@@ -108,11 +110,63 @@ const UsersPage: React.FC = () => {
       console.error('Failed to delete user:', error);
     }
   };
+  const handleUserCreate = async (values: {
+    fullname: string;
+    email: string;
+    password: string;
+    role: string;
+  }) => {
+    try {
+      const selectedRole = allRoles.find(
+        (role) => role.name.toLowerCase() === values.role.toLowerCase(),
+      );
+      if (!selectedRole) {
+        console.error('Role not found:', values.role);
+        return;
+      }
+      const userData = {
+        fullName: values.fullname,
+        email: values.email,
+        roleId: selectedRole.id,
+      };
+      const response = await api.post('/users', userData);
+      console.log('User created successfully:', response.data);
+      await api.post(`users/${response.data.id}/password`, { password: values.password });
+      console.log('Password set successfully');
+      await loadUsers();
+    } catch (e) {
+      console.log('Failed to create user:', e);
+    } finally {
+      SetIsUserAddModalOpen(false);
+    }
+  };
 
   return (
     <SharedLayout>
       <div>
-        <h2 className="text-lg font-semibold mb-4">Users List</h2>
+        <div className="flex justify-between items-center mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold mb-4">Users Management</h2>
+            <div className="max-w-xs mb-4">
+              <Input
+                placeholder="Search users by name..."
+                prefix={<SearchOutlined style={{ color: '#aaa' }} />}
+                onChange={(e) => handleSearch(e.target.value)}
+              />
+            </div>
+          </div>
+          <div>
+            <Button type="primary" onClick={() => SetIsUserAddModalOpen(true)}>
+              + Add User
+            </Button>
+          </div>
+        </div>
+        <AddUserModal
+          roles={allRoles}
+          handleUserCreate={handleUserCreate}
+          open={isUserAddModalOpen}
+          onCancel={() => SetIsUserAddModalOpen(false)}
+        />
 
         <UserTable
           users={allUsers}

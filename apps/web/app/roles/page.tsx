@@ -91,7 +91,7 @@ const RolesPage: React.FC = () => {
   return (
     <SharedLayout>
       <div>
-        <h2 className="text-lg font-semibold mb-4">User Roles</h2>
+        <h2 className="text-2xl font-semibold mb-4">User Roles</h2>
         <div className="flex justify-end">
           <Button
             type="primary"

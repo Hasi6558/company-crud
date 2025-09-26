@@ -80,13 +80,6 @@ const UserTable: React.FC<UserTableProps> = ({
 
   return (
     <>
-      <div className="max-w-xs mb-4">
-        <Input
-          placeholder="Search users by name..."
-          prefix={<SearchOutlined style={{ color: '#aaa' }} />}
-          onChange={(e) => onSearch(e.target.value)}
-        />
-      </div>
       <Table
         dataSource={filteredUsers.length > 0 ? filteredUsers : users}
         columns={columns}

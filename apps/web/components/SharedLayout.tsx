@@ -13,24 +13,20 @@ interface SharedLayoutProps {
 
 const menuItems = [
   {
-    key: '/users',
-    icon: <VideoCameraOutlined />,
-    label: 'Users',
-  },
-  {
-    key: '/add-users',
-    icon: <VideoCameraOutlined />,
-    label: 'Add Users',
-  },
-  {
     key: '/profiles',
     icon: <VideoCameraOutlined />,
     label: 'Profiles',
   },
   {
+    key: '/users',
+    icon: <VideoCameraOutlined />,
+    label: 'Users Management',
+  },
+
+  {
     key: '/roles',
     icon: <VideoCameraOutlined />,
-    label: 'Roles',
+    label: 'Roles Management',
   },
 ];
 
