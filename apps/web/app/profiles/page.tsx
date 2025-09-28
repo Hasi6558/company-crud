@@ -10,6 +10,7 @@ import api from '@/app/lib/axios';
 4;
 import { PERMISSION_LABELS } from '@/constants/permissions';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
+import { usePermission } from '@/components/UsePermissions';
 
 const ProfilesPage: React.FC = () => {
   const { user } = useAuth();
@@ -35,6 +36,7 @@ const ProfilesPage: React.FC = () => {
       setIsEditModalOpen(true);
     }
   };
+  const { can } = usePermission();
 
   const handleProfileUpdate = async (values: { fullname: string; email: string; role: string }) => {
     try {
@@ -97,7 +99,12 @@ const ProfilesPage: React.FC = () => {
             </div>
           }
           extra={
-            <Button type="primary" className="px-8" onClick={handleEditProfile}>
+            <Button
+              type="primary"
+              className="px-8"
+              onClick={handleEditProfile}
+              disabled={!can(['update:users', 'read:roles'])}
+            >
               Edit Profile
             </Button>
           }
@@ -125,39 +132,6 @@ const ProfilesPage: React.FC = () => {
           onCancel={() => setIsPasswordChangeModalOpen(false)}
           changePassword={changePassword}
         />
-
-        {/* <div className="flex justify-center">
-          <div className="w-full max-w-lg p-8 bg-white rounded-lg" style={{ minHeight: 400 }}>
-            <div className="flex flex-col items-center space-y-8">
-              <div className="flex flex-col items-center">
-                <div>
-                  <UserOutlined style={{ fontSize: 100 }} />
-                </div>
-                <div className="mt-4 text-center">
-                  <div className="flex justify-center mb-2">
-                    <span className="pr-2 font-semibold text-md">Full Name:</span>
-                    <span className="font-semibold text-md">{user?.fullName}</span>
-                  </div>
-                  <div className="flex justify-center mb-2">
-                    <span className="pr-2 font-semibold text-md">Email:</span>
-                    <span className="font-semibold text-md">{user?.email}</span>
-                  </div>
-                  <div className="flex justify-center">
-                    <span className="pr-2 font-semibold text-md">Role:</span>
-                    <span className="font-semibold text-md">{user?.role?.name}</span>
-                  </div>
-                </div>
-              </div>
-              <div>
-                <Button type="primary" className="px-8" onClick={handleEditProfile}>
-                  Edit Profile
-                </Button>
-              </div>
-            </div>
-          </div>
-        </div> */}
-
-        {/* Edit Profile Modal */}
         <EditUserModal
           open={isEditModalOpen}
           user={user}

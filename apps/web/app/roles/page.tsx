@@ -7,8 +7,10 @@ import EditPermissionsModal from '@/components/EditPermissionsModal';
 import { Role } from '@/types';
 import api from '@/app/lib/axios';
 import AddRoleModal from '@/components/AddRoleModal';
+import { usePermission } from '@/components/UsePermissions';
 
 const RolesPage: React.FC = () => {
+  const { can } = usePermission();
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [selectedRoleToDelete, setSelectedRoleToDelete] = useState<Role | null>(null);
   const [editPermissionsRole, setEditPermissionsRole] = useState<Role | null>(null);
@@ -97,6 +99,7 @@ const RolesPage: React.FC = () => {
             type="primary"
             onClick={() => handleAddRole('New Role')}
             style={{ marginBottom: '10px' }}
+            disabled={!can(['create:roles'])}
           >
             + Add Role
           </Button>

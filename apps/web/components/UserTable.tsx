@@ -5,6 +5,7 @@ import { EditOutlined, DeleteOutlined, SearchOutlined } from '@ant-design/icons'
 // Update the import path below to the correct relative path where your User type is defined.
 // For example, if User is defined in 'types/index.ts' at the project root, use:
 import { User } from '../../web/types/index';
+import { usePermission } from './UsePermissions';
 // Or adjust the path as needed to match your project structure.
 
 interface UserTableProps {
@@ -24,6 +25,7 @@ const UserTable: React.FC<UserTableProps> = ({
   onEditUser,
   onDeleteUser,
 }) => {
+  const { can } = usePermission();
   const columns = [
     {
       title: 'Full Name',
@@ -61,15 +63,18 @@ const UserTable: React.FC<UserTableProps> = ({
               e.stopPropagation();
               onEditUser(record);
             }}
+            disabled={!can(['update:users', 'read:roles'])}
           >
             <EditOutlined />
           </Button>
+
           <Button
             type="link"
             onClick={(e) => {
               e.stopPropagation();
               onDeleteUser(record);
             }}
+            disabled={!can(['delete:users'])}
           >
             <DeleteOutlined />
           </Button>

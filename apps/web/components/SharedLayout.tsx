@@ -4,6 +4,8 @@ import { Layout, Menu, theme, Button } from 'antd';
 import { VideoCameraOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
+import { permission } from 'process';
+import { icons } from 'antd/es/image/PreviewGroup';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -16,17 +18,20 @@ const menuItems = [
     key: '/profiles',
     icon: <VideoCameraOutlined />,
     label: 'Profiles',
+    Permission: 'read:user',
   },
   {
     key: '/users',
     icon: <VideoCameraOutlined />,
     label: 'Users Management',
+    Permission: 'read:users',
   },
 
   {
     key: '/roles',
     icon: <VideoCameraOutlined />,
     label: 'Roles Management',
+    Permission: 'read:roles',
   },
 ];
 
@@ -35,6 +40,16 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+
+  const hasPermission = (perm: string) => user?.role?.permissions?.includes(perm);
+
+  const allowedMenuItems = menuItems
+    .filter((section) => hasPermission(section.Permission))
+    .map((section) => ({
+      key: section.key,
+      label: section.label,
+      icons: section.icon,
+    }));
 
   const {
     token: { colorBgContainer, borderRadiusLG },
@@ -57,7 +72,7 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
           theme="dark"
           selectedKeys={[pathname]}
           mode="inline"
-          items={menuItems}
+          items={allowedMenuItems}
           onClick={({ key }) => handleMenuClick(key)}
         />
       </Sider>

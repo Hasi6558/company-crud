@@ -4,6 +4,7 @@ import { Table, Button } from 'antd';
 import { EditOutlined, DeleteOutlined } from '@ant-design/icons';
 import { Role } from '@/types';
 import { PERMISSION_LABELS } from '../constants/permissions';
+import { usePermission } from './UsePermissions';
 
 interface RoleTableProps {
   roles: Role[];
@@ -12,6 +13,7 @@ interface RoleTableProps {
 }
 
 const RoleTable: React.FC<RoleTableProps> = ({ roles, onEditPermissions, onDeleteRole }) => {
+  const { can } = usePermission();
   const getPermissionLabel = (permissionValue: string) => {
     return PERMISSION_LABELS[permissionValue] || permissionValue;
   };
@@ -40,9 +42,15 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, onEditPermissions, onDelet
             </ul>
           </div>
           <div>
-            <Button type="link" onClick={() => onEditPermissions(record)}>
-              <EditOutlined />
-            </Button>
+            {record.name !== 'superadmin' && (
+              <Button
+                type="link"
+                onClick={() => onEditPermissions(record)}
+                disabled={!can(['update:roles'])}
+              >
+                <EditOutlined />
+              </Button>
+            )}
           </div>
         </div>
       ),
@@ -52,15 +60,18 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, onEditPermissions, onDelet
       key: 'action',
       render: (_: unknown, record: Role) => (
         <div>
-          <Button
-            type="link"
-            onClick={(e) => {
-              e.stopPropagation();
-              onDeleteRole(record);
-            }}
-          >
-            <DeleteOutlined />
-          </Button>
+          {record.name !== 'superadmin' && (
+            <Button
+              type="link"
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteRole(record);
+              }}
+              disabled={!can(['delete:roles'])}
+            >
+              <DeleteOutlined />
+            </Button>
+          )}
         </div>
       ),
     },

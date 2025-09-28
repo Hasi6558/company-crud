@@ -8,6 +8,7 @@ import EditUserModal from '@/components/EditUserModal';
 import { User, Role } from '@/types';
 import api from '@/app/lib/axios';
 import AddUserModal from '@/components/AddUserModal';
+import { usePermission } from '@/components/UsePermissions';
 
 const UsersPage: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -25,7 +26,7 @@ const UsersPage: React.FC = () => {
     loadUsers();
     loadRoles();
   }, []);
-
+  const { can } = usePermission();
   const loadUsers = async () => {
     try {
       const response = await api.get('/users');
@@ -156,7 +157,11 @@ const UsersPage: React.FC = () => {
             </div>
           </div>
           <div>
-            <Button type="primary" onClick={() => SetIsUserAddModalOpen(true)}>
+            <Button
+              type="primary"
+              onClick={() => SetIsUserAddModalOpen(true)}
+              disabled={!can(['create:users', 'read:roles'])}
+            >
               + Add User
             </Button>
           </div>

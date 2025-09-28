@@ -26,7 +26,7 @@ const LoginPage = () => {
       if (response.status === 201) {
         // Refresh user data after successful login
         await refreshUser();
-        router.push('/users');
+        router.push('/profiles');
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;
