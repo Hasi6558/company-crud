@@ -1,30 +1,26 @@
 'use client';
-import { Button, Input } from 'antd';
+import { Button, Form, Input, Card, Alert } from 'antd';
+import { UserOutlined, LockOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 import app from '../lib/axios';
 import { useRouter } from 'next/navigation';
-import { Alert } from 'antd';
 import type { AxiosError } from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
 
 const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const router = useRouter();
   const [error, setError] = useState('');
+  const router = useRouter();
   const { refreshUser } = useAuth();
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (values: { email: string; password: string }) => {
     setIsLoading(true);
     setError('');
 
     try {
-      const response = await app.post('/auth/login', { email, password });
+      const response = await app.post('/auth/login', values);
 
       if (response.status === 201) {
-        // Refresh user data after successful login
         await refreshUser();
         router.push('/profiles');
       }
@@ -43,42 +39,28 @@ const LoginPage = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center ">
-      <div className="max-w-md w-full space-y-8">
-        <div className="text-center text-3xl font-extrabold text-gray-900">
-          Sign in to your account
-        </div>
-        <div>{error && <Alert message={error} type="error" showIcon closable />}</div>
-        <div>
-          <form action="" onSubmit={handleSubmit} className="mt-8">
-            <div className="flex flex-col space-y-4">
-              <Input
-                type="email"
-                name="email"
-                placeholder="Email"
-                onChange={(e) => setEmail(e.target.value)}
-              />
-              <Input
-                type="password"
-                name="password"
-                placeholder="Password"
-                onChange={(e) => setPassword(e.target.value)}
-              />
-            </div>
-          </form>
-        </div>
-        <div>
-          <Button
-            type="primary"
-            className="w-full"
-            htmlType="submit"
-            loading={isLoading}
-            onClick={handleSubmit}
+    <div className="flex min-h-screen items-center justify-center bg-gray-100">
+      <Card title="Sign in to your account" className="w-full max-w-md shadow-lg">
+        {error && <Alert message={error} type="error" showIcon closable className="mb-4" />}
+        <Form layout="vertical" onFinish={handleSubmit} initialValues={{ email: '', password: '' }}>
+          <Form.Item name="email" rules={[{ required: true, message: 'Please input your Email!' }]}>
+            <Input prefix={<UserOutlined />} placeholder="Email" />
+          </Form.Item>
+
+          <Form.Item
+            name="password"
+            rules={[{ required: true, message: 'Please input your Password!' }]}
           >
-            Sign in
-          </Button>
-        </div>
-      </div>
+            <Input.Password prefix={<LockOutlined />} placeholder="Password" />
+          </Form.Item>
+
+          <Form.Item>
+            <Button type="primary" htmlType="submit" className="w-full" loading={isLoading}>
+              Sign In
+            </Button>
+          </Form.Item>
+        </Form>
+      </Card>
     </div>
   );
 };

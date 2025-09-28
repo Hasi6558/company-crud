@@ -4,8 +4,6 @@ import { Layout, Menu, theme, Button } from 'antd';
 import { VideoCameraOutlined, LogoutOutlined } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
-import { permission } from 'process';
-import { icons } from 'antd/es/image/PreviewGroup';
 
 const { Header, Content, Footer, Sider } = Layout;
 
@@ -18,20 +16,20 @@ const menuItems = [
     key: '/profiles',
     icon: <VideoCameraOutlined />,
     label: 'Profiles',
-    Permission: 'read:user',
+    Permissions: ['read:user'],
   },
   {
     key: '/users',
     icon: <VideoCameraOutlined />,
     label: 'Users Management',
-    Permission: 'read:users',
+    Permissions: ['read:users'],
   },
 
   {
     key: '/roles',
     icon: <VideoCameraOutlined />,
     label: 'Roles Management',
-    Permission: 'read:roles',
+    Permissions: ['read:roles', 'create:roles'],
   },
 ];
 
@@ -41,10 +39,11 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const hasPermission = (perm: string) => user?.role?.permissions?.includes(perm);
+  const hasAllPermission = (perms: string[]) =>
+    perms.every((perm) => user?.role?.permissions?.includes(perm));
 
   const allowedMenuItems = menuItems
-    .filter((section) => hasPermission(section.Permission))
+    .filter((section) => hasAllPermission(section.Permissions))
     .map((section) => ({
       key: section.key,
       label: section.label,
