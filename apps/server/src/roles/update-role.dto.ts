@@ -1,8 +1,9 @@
-import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { IsArray, IsNotEmpty, IsOptional, IsString, MinLength } from 'class-validator';
 
 export class UpdateRoleDto {
   @IsNotEmpty()
   @IsOptional()
+  @MinLength(6, { message: 'Role name must be at least 6 characters long' })
   name?: string;
 
   @IsOptional()

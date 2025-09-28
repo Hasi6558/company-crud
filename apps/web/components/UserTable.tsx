@@ -43,13 +43,8 @@ const UserTable: React.FC<UserTableProps> = ({
       render: (_: unknown, record: User) => {
         const roleName = record.role?.name;
         if (!roleName) return null;
-        let color = roleName.length > 5 ? 'geekblue' : 'green';
-        if (roleName === 'admin') color = 'volcano';
-        return (
-          <Tag color={color} key={roleName}>
-            {roleName.toUpperCase()}
-          </Tag>
-        );
+
+        return <Tag key={roleName}>{roleName.toUpperCase()}</Tag>;
       },
     },
     {
@@ -75,6 +70,7 @@ const UserTable: React.FC<UserTableProps> = ({
               onDeleteUser(record);
             }}
             disabled={!can(['delete:users'])}
+            danger
           >
             <DeleteOutlined />
           </Button>

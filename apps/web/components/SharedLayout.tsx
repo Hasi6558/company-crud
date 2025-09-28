@@ -1,7 +1,16 @@
 'use client';
 import React, { useState } from 'react';
 import { Layout, Menu, theme, Button } from 'antd';
-import { VideoCameraOutlined, LogoutOutlined } from '@ant-design/icons';
+import {
+  VideoCameraOutlined,
+  LogoutOutlined,
+  UserOutlined,
+  ProfileOutlined,
+  CheckSquareTwoTone,
+  CheckSquareOutlined,
+  MoonOutlined,
+  SunOutlined,
+} from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
 import { useRouter, usePathname } from 'next/navigation';
 
@@ -14,20 +23,21 @@ interface SharedLayoutProps {
 const menuItems = [
   {
     key: '/profiles',
-    icon: <VideoCameraOutlined />,
+    icon: <ProfileOutlined />,
     label: 'Profiles',
     Permissions: ['read:user'],
   },
   {
     key: '/users',
-    icon: <VideoCameraOutlined />,
+    icon: <UserOutlined />,
     label: 'Users Management',
     Permissions: ['read:users'],
   },
 
   {
     key: '/roles',
-    icon: <VideoCameraOutlined />,
+
+    icon: <CheckSquareOutlined />,
     label: 'Roles Management',
     Permissions: ['read:roles', 'create:roles'],
   },
@@ -38,6 +48,11 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
+  const [isDarkMode, setIsDarkMode] = useState(false);
+
+  const toggleDarkMode = () => {
+    setIsDarkMode(!isDarkMode);
+  };
 
   const hasAllPermission = (perms: string[]) =>
     perms.every((perm) => user?.role?.permissions?.includes(perm));
@@ -47,7 +62,7 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
     .map((section) => ({
       key: section.key,
       label: section.label,
-      icons: section.icon,
+      icon: section.icon,
     }));
 
   const {
@@ -83,6 +98,10 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
               <span>Hi, {user?.fullName}</span>
               <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
                 Logout
+              </Button>
+
+              <Button onClick={toggleDarkMode}>
+                {isDarkMode ? <MoonOutlined /> : <SunOutlined />}
               </Button>
             </div>
           </div>

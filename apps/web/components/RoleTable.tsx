@@ -68,6 +68,7 @@ const RoleTable: React.FC<RoleTableProps> = ({ roles, onEditPermissions, onDelet
                 onDeleteRole(record);
               }}
               disabled={!can(['delete:roles'])}
+              danger
             >
               <DeleteOutlined />
             </Button>
