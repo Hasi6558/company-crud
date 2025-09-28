@@ -9,6 +9,7 @@ import { User, Role } from '@/types';
 import api from '@/app/lib/axios';
 import AddUserModal from '@/components/AddUserModal';
 import { usePermission } from '@/components/UsePermissions';
+import ProtectedRoute from '@/components/ProtectedRoute';
 
 const UsersPage: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
@@ -143,113 +144,116 @@ const UsersPage: React.FC = () => {
   };
 
   return (
-    <SharedLayout>
-      <div>
-        <div className="flex justify-between items-center mb-4">
-          <div>
-            <h2 className="text-2xl font-semibold mb-4">Users Management</h2>
-            <div className="max-w-xs mb-4">
-              <Input
-                placeholder="Search users by name..."
-                prefix={<SearchOutlined style={{ color: '#aaa' }} />}
-                onChange={(e) => handleSearch(e.target.value)}
-              />
+    <ProtectedRoute>
+      <SharedLayout>
+        <div>
+          <div className="flex justify-between items-center mb-4">
+            <div>
+              <h2 className="text-2xl font-semibold mb-4">Users Management</h2>
+              <div className="max-w-xs mb-4">
+                <Input
+                  placeholder="Search users by name..."
+                  prefix={<SearchOutlined style={{ color: '#aaa' }} />}
+                  onChange={(e) => handleSearch(e.target.value)}
+                />
+              </div>
+            </div>
+            <div>
+              <Button
+                type="primary"
+                onClick={() => SetIsUserAddModalOpen(true)}
+                disabled={!can(['create:users', 'read:roles'])}
+              >
+                + Add User
+              </Button>
             </div>
           </div>
-          <div>
-            <Button
-              type="primary"
-              onClick={() => SetIsUserAddModalOpen(true)}
-              disabled={!can(['create:users', 'read:roles'])}
-            >
-              + Add User
-            </Button>
-          </div>
-        </div>
-        <AddUserModal
-          roles={allRoles}
-          handleUserCreate={handleUserCreate}
-          open={isUserAddModalOpen}
-          onCancel={() => SetIsUserAddModalOpen(false)}
-        />
+          <AddUserModal
+            roles={allRoles}
+            handleUserCreate={handleUserCreate}
+            open={isUserAddModalOpen}
+            onCancel={() => SetIsUserAddModalOpen(false)}
+          />
 
-        <UserTable
-          users={allUsers}
-          filteredUsers={filteredUsers}
-          onSearch={handleSearch}
-          onRowClick={handleRowClick}
-          onEditUser={handleEditUser}
-          onDeleteUser={handleDeleteUser}
-        />
+          <UserTable
+            users={allUsers}
+            filteredUsers={filteredUsers}
+            onSearch={handleSearch}
+            onRowClick={handleRowClick}
+            onEditUser={handleEditUser}
+            onDeleteUser={handleDeleteUser}
+          />
 
-        {/* User Info Modal */}
-        <Modal
-          open={isModalOpen}
-          footer={[
-            <Button key="ok" type="primary" onClick={() => setIsModalOpen(false)}>
-              OK
-            </Button>,
-          ]}
-          onCancel={() => setIsModalOpen(false)}
-        >
-          {selectedUser && (
-            <div>
-              <h1 className="text-lg">User Info</h1>
-              <div className="flex space-x-4 items-center mt-4">
-                <div>
-                  <UserOutlined style={{ fontSize: 100 }} />
-                </div>
-                <div>
-                  <div className="flex">
-                    <span className="pr-2">Full Name:</span>
-                    <span>{selectedUser.fullName}</span>
+          {/* User Info Modal */}
+          <Modal
+            open={isModalOpen}
+            footer={[
+              <Button key="ok" type="primary" onClick={() => setIsModalOpen(false)}>
+                OK
+              </Button>,
+            ]}
+            onCancel={() => setIsModalOpen(false)}
+          >
+            {selectedUser && (
+              <div>
+                <h1 className="text-lg">User Info</h1>
+                <div className="flex space-x-4 items-center mt-4">
+                  <div>
+                    <UserOutlined style={{ fontSize: 100 }} />
                   </div>
-                  <div className="flex">
-                    <span className="pr-2">Email:</span>
-                    <span>{selectedUser.email}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="pr-2">Role:</span>
-                    <span>{selectedUser.role?.name}</span>
-                  </div>
-                  <div className="flex">
-                    <span className="pr-2">Registered Date:</span>
-                    <span>
-                      {selectedUser.createdAt
-                        ? new Date(selectedUser.createdAt).toLocaleString()
-                        : ''}
-                    </span>
+                  <div>
+                    <div className="flex">
+                      <span className="pr-2">Full Name:</span>
+                      <span>{selectedUser.fullName}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="pr-2">Email:</span>
+                      <span>{selectedUser.email}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="pr-2">Role:</span>
+                      <span>{selectedUser.role?.name}</span>
+                    </div>
+                    <div className="flex">
+                      <span className="pr-2">Registered Date:</span>
+                      <span>
+                        {selectedUser.createdAt
+                          ? new Date(selectedUser.createdAt).toLocaleString()
+                          : ''}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-        </Modal>
+            )}
+          </Modal>
 
-        {/* Edit User Modal */}
-        <EditUserModal
-          open={isEditModalOpen}
-          user={selectedUserToEdit}
-          roles={allRoles}
-          onCancel={() => setIsEditModalOpen(false)}
-          onSave={handleUserUpdate}
-        />
+          {/* Edit User Modal */}
+          <EditUserModal
+            open={isEditModalOpen}
+            user={selectedUserToEdit}
+            roles={allRoles}
+            onCancel={() => setIsEditModalOpen(false)}
+            onSave={handleUserUpdate}
+          />
 
-        {/* Delete Confirmation Modal */}
-        <Modal
-          title="Confirm Deletion"
-          open={isDeleteModalOpen}
-          onOk={handleDeleteConfirm}
-          onCancel={() => setIsDeleteModalOpen(false)}
-          okText="Delete"
-          okButtonProps={{ danger: true }}
-        >
-          <p>
-            Are you sure you want to delete user <strong>{selectedUserToDelete?.fullName}</strong>?
-          </p>
-        </Modal>
-      </div>
-    </SharedLayout>
+          {/* Delete Confirmation Modal */}
+          <Modal
+            title="Confirm Deletion"
+            open={isDeleteModalOpen}
+            onOk={handleDeleteConfirm}
+            onCancel={() => setIsDeleteModalOpen(false)}
+            okText="Delete"
+            okButtonProps={{ danger: true }}
+          >
+            <p>
+              Are you sure you want to delete user <strong>{selectedUserToDelete?.fullName}</strong>
+              ?
+            </p>
+          </Modal>
+        </div>
+      </SharedLayout>
+    </ProtectedRoute>
   );
 };
 

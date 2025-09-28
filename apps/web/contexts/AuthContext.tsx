@@ -35,9 +35,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Function to get user details from backend
   const fetchUserProfile = async () => {
     try {
+      const token = localStorage.getItem('authToken');
+      if (!token) {
+        throw new Error('No token found');
+      }
+
       // First get user ID from JWT token
       const authResponse = await api.get('/auth/me');
-
       const userId = authResponse.data.user.sub;
 
       // Then get full user details
@@ -48,6 +52,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } catch (error) {
       console.error('Error fetching user:', error);
       setUser(null);
+      localStorage.removeItem('authToken');
       throw error;
     }
   };
@@ -67,10 +72,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   // Logout function
   const logout = async () => {
     try {
+      // Optional: notify backend about logout (if you want to blacklist tokens)
       await api.post('/auth/logout');
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
+      // Remove token from localStorage
+      localStorage.removeItem('authToken');
       setUser(null);
       router.push('/login');
     }
@@ -81,7 +89,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        await fetchUserProfile();
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          await fetchUserProfile();
+        }
       } catch (error) {
         console.error('Failed to check auth:', error);
       } finally {

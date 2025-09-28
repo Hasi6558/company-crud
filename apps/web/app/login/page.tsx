@@ -21,8 +21,15 @@ const LoginPage = () => {
       const response = await app.post('/auth/login', values);
 
       if (response.status === 201) {
-        await refreshUser();
-        router.push('/profiles');
+        // Store token in localStorage
+        const token = response.data.accessToken;
+        if (token) {
+          localStorage.setItem('authToken', token);
+          await refreshUser();
+          router.push('/profiles');
+        } else {
+          setError('No token received from server');
+        }
       }
     } catch (error: unknown) {
       const axiosError = error as AxiosError<{ message?: string }>;

@@ -1,8 +1,7 @@
-import { Body, Controller, Get, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, Post, Req, UseGuards } from '@nestjs/common';
 import { AuthService } from './auth.service';
 import { LoginDto } from './login.dto';
 import { AuthGuard } from './auth.guard';
-import type { Response } from 'express';
 
 interface AuthenticatedRequest extends Request {
   user: {
@@ -16,23 +15,26 @@ export class AuthController {
   constructor(private readonly authService: AuthService) {}
 
   @Post('login')
-  async login(@Body() dto: LoginDto, @Res({ passthrough: true }) response: Response) {
+  async login(@Body() dto: LoginDto) {
     const user = await this.authService.validateUser(dto.email, dto.password);
     const tokenData = this.authService.signToken(user);
 
-    response.cookie('token', tokenData.accessToken, {
-      httpOnly: true,
-      secure: false, // set to false if not using HTTPS in dev
-      sameSite: 'strict',
-      maxAge: 24 * 60 * 60 * 1000, // 1 day
-    });
-
-    return { message: 'Login successful' }; // still return something to the client
+    // Return token in response body instead of setting cookie
+    return {
+      message: 'Login successful',
+      accessToken: tokenData.accessToken,
+      user: {
+        id: user.id,
+        email: user.email,
+        fullName: user.fullName,
+      },
+    };
   }
 
   @Post('logout')
-  logout(@Res({ passthrough: true }) response: Response) {
-    response.clearCookie('token');
+  logout() {
+    // With JWT tokens, logout is handled client-side by removing the token
+    // Optionally, you could implement token blacklisting here if needed
     return { message: 'Logout successful' };
   }
 
