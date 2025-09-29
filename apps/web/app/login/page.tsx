@@ -1,7 +1,7 @@
 'use client';
 import { Button, Form, Input, Card, Alert } from 'antd';
 import { UserOutlined, LockOutlined } from '@ant-design/icons';
-import React, { useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import app from '../lib/axios';
 import { useRouter } from 'next/navigation';
 import type { AxiosError } from 'axios';
@@ -13,37 +13,40 @@ const LoginPage = () => {
   const router = useRouter();
   const { refreshUser } = useAuth();
 
-  const handleSubmit = async (values: { email: string; password: string }) => {
-    setIsLoading(true);
-    setError('');
+  const handleSubmit = useCallback(
+    async (values: { email: string; password: string }) => {
+      setIsLoading(true);
+      setError('');
 
-    try {
-      const response = await app.post('/auth/login', values);
+      try {
+        const response = await app.post('/auth/login', values);
 
-      if (response.status === 201) {
-        // Store token in localStorage
-        const token = response.data.accessToken;
-        if (token) {
-          localStorage.setItem('authToken', token);
-          await refreshUser();
-          router.push('/profiles');
-        } else {
-          setError('No token received from server');
+        if (response.status === 201) {
+          // Store token in localStorage
+          const token = response.data.accessToken;
+          if (token) {
+            localStorage.setItem('authToken', token);
+            await refreshUser();
+            router.push('/profiles');
+          } else {
+            setError('No token received from server');
+          }
         }
+      } catch (error: unknown) {
+        const axiosError = error as AxiosError<{ message?: string }>;
+        if (axiosError?.response?.data?.message) {
+          setError(axiosError.response.data.message);
+        } else if (error instanceof Error) {
+          setError(error.message);
+        } else {
+          setError('Network Error. Please try again later.');
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error: unknown) {
-      const axiosError = error as AxiosError<{ message?: string }>;
-      if (axiosError?.response?.data?.message) {
-        setError(axiosError.response.data.message);
-      } else if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError('Network Error. Please try again later.');
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    },
+    [refreshUser, router],
+  );
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">

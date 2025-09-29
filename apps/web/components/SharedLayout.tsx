@@ -1,5 +1,5 @@
 'use client';
-import React, { useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { Layout, Menu, theme, Button, ConfigProvider } from 'antd';
 import {
   VideoCameraOutlined,
@@ -51,29 +51,38 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
 
-  const hasAllPermission = (perms: string[]) =>
-    perms.every((perm) => user?.role?.permissions?.includes(perm));
+  const hasAllPermission = useCallback(
+    (perms: string[]) => perms.every((perm) => user?.role?.permissions?.includes(perm)),
+    [user?.role?.permissions],
+  );
 
-  const allowedMenuItems = menuItems
-    .filter((section) => hasAllPermission(section.Permissions))
-    .map((section) => ({
-      key: section.key,
-      label: section.label,
-      icon: section.icon,
-    }));
+  const allowedMenuItems = useMemo(
+    () =>
+      menuItems
+        .filter((section) => hasAllPermission(section.Permissions))
+        .map((section) => ({
+          key: section.key,
+          label: section.label,
+          icon: section.icon,
+        })),
+    [hasAllPermission],
+  );
 
   const {
     token: { borderRadiusLG },
   } = theme.useToken();
 
-  const handleLogout = async () => {
+  const handleLogout = useCallback(async () => {
     await logout();
     router.push('/login');
-  };
+  }, [logout, router]);
 
-  const handleMenuClick = (key: string) => {
-    router.push(key);
-  };
+  const handleMenuClick = useCallback(
+    (key: string) => {
+      router.push(key);
+    },
+    [router],
+  );
 
   return (
     <ConfigProvider

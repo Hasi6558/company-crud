@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import api from '../app/lib/axios';
 
@@ -33,13 +33,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const router = useRouter();
 
   // Function to get user details from backend
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = useCallback(async () => {
     try {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        throw new Error('No token found');
-      }
-
       // First get user ID from JWT token
       const authResponse = await api.get('/auth/me');
       const userId = authResponse.data.user.sub;
@@ -55,10 +50,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       localStorage.removeItem('authToken');
       throw error;
     }
-  };
+  }, []);
 
-  // Function to refresh user data
-  const refreshUser = async () => {
+  const refreshUser = useCallback(async () => {
     setIsLoading(true);
     try {
       await fetchUserProfile();
@@ -67,10 +61,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [fetchUserProfile]);
 
   // Logout function
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       // Optional: notify backend about logout (if you want to blacklist tokens)
       await api.post('/auth/logout');
@@ -82,17 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
       setUser(null);
       router.push('/login');
     }
-  };
+  }, [router]);
+
+  const isAuthenticated = useMemo(() => !!user, [user]);
 
   // Check authentication on mount
   useEffect(() => {
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        const token = localStorage.getItem('authToken');
-        if (token) {
-          await fetchUserProfile();
-        }
+        await fetchUserProfile();
       } catch (error) {
         console.error('Failed to check auth:', error);
       } finally {
@@ -103,13 +96,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     checkAuth();
   }, []);
 
-  const value = {
-    user,
-    isLoading,
-    logout,
-    refreshUser,
-    isAuthenticated: !!user,
-  };
+  const value = useMemo(
+    () => ({
+      user,
+      isLoading,
+      logout,
+      refreshUser,
+      isAuthenticated,
+    }),
+    [user, isLoading, logout, refreshUser, isAuthenticated],
+  );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Button, Card, Descriptions, Divider } from 'antd';
 import { UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
@@ -32,51 +32,58 @@ const ProfilesPage: React.FC = () => {
     }
   };
 
-  const handleEditProfile = () => {
+  const handleEditProfile = useCallback(() => {
     if (user) {
       setIsEditModalOpen(true);
     }
-  };
+  }, [user]);
+
   const { can } = usePermission();
 
-  const handleProfileUpdate = async (values: { fullname: string; email: string }) => {
-    try {
-      if (!user) return;
+  const handleProfileUpdate = useCallback(
+    async (values: { fullname: string; email: string }) => {
+      try {
+        if (!user) return;
 
-      const updateData = {
-        fullName: values.fullname,
-        email: values.email,
-      };
+        const updateData = {
+          fullName: values.fullname,
+          email: values.email,
+        };
 
-      await api.patch(`/users/update/${user.id}`, updateData);
-      setIsEditModalOpen(false);
+        await api.patch(`/users/update/${user.id}`, updateData);
+        setIsEditModalOpen(false);
 
-      // You might want to refresh the user context here
-      console.log('Profile updated successfully');
-    } catch (error) {
-      console.error('Failed to update profile:', error);
-    }
-  };
-  const getPermissionLabel = (permission: string) => {
+        // You might want to refresh the user context here
+        console.log('Profile updated successfully');
+      } catch (error) {
+        console.error('Failed to update profile:', error);
+      }
+    },
+    [user],
+  );
+  const getPermissionLabel = useCallback((permission: string) => {
     return PERMISSION_LABELS[permission] || permission;
-  };
+  }, []);
 
   //password change
-  const handlePasswordChange = () => {
+  const handlePasswordChange = useCallback(() => {
     setIsPasswordChangeModalOpen(true);
-  };
+  }, []);
 
-  const changePassword = async (value: string) => {
-    if (!user) return;
-    try {
-      await api.patch(`users/${user.id}/password`, { newPassword: value });
-      console.log('Password changed successfully');
-    } catch (error) {
-      console.error('Failed to change password:', error);
-    } finally {
-      setIsPasswordChangeModalOpen(false);
-    }
-  };
+  const changePassword = useCallback(
+    async (value: string) => {
+      if (!user) return;
+      try {
+        await api.patch(`users/${user.id}/password`, { newPassword: value });
+        console.log('Password changed successfully');
+      } catch (error) {
+        console.error('Failed to change password:', error);
+      } finally {
+        setIsPasswordChangeModalOpen(false);
+      }
+    },
+    [user],
+  );
 
   return (
     <SharedLayout>
