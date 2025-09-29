@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { parseCookies, destroyCookie } from 'nookies';
 
 const api = axios.create({
   baseURL: 'http://localhost:4001',
@@ -8,7 +9,8 @@ const api = axios.create({
 // Add request interceptor to include token from localStorage
 api.interceptors.request.use(
   (config) => {
-    const token = localStorage.getItem('authToken');
+    const cookies = parseCookies();
+    const token = cookies.token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
@@ -24,9 +26,7 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      // Token is invalid or expired, remove from localStorage
-      localStorage.removeItem('authToken');
-      // Redirect to login page
+      destroyCookie(null, 'token');
       window.location.href = '/login';
     }
     return Promise.reject(error);
