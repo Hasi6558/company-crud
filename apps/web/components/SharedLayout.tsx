@@ -1,6 +1,6 @@
 'use client';
 import React, { useState } from 'react';
-import { Layout, Menu, theme, Button } from 'antd';
+import { Layout, Menu, theme, Button, ConfigProvider } from 'antd';
 import {
   VideoCameraOutlined,
   LogoutOutlined,
@@ -12,6 +12,7 @@ import {
   SunOutlined,
 } from '@ant-design/icons';
 import { useAuth } from '@/contexts/AuthContext';
+import { useTheme } from '@/contexts/ThemeContext';
 import { useRouter, usePathname } from 'next/navigation';
 
 const { Header, Content, Footer, Sider } = Layout;
@@ -45,14 +46,10 @@ const menuItems = [
 
 const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   const { user, logout } = useAuth();
+  const { isDarkMode, toggleDarkMode } = useTheme();
   const router = useRouter();
   const pathname = usePathname();
   const [collapsed, setCollapsed] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(false);
-
-  const toggleDarkMode = () => {
-    setIsDarkMode(!isDarkMode);
-  };
 
   const hasAllPermission = (perms: string[]) =>
     perms.every((perm) => user?.role?.permissions?.includes(perm));
@@ -66,7 +63,7 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
     }));
 
   const {
-    token: { colorBgContainer, borderRadiusLG },
+    token: { borderRadiusLG },
   } = theme.useToken();
 
   const handleLogout = async () => {
@@ -79,48 +76,89 @@ const SharedLayout: React.FC<SharedLayoutProps> = ({ children }) => {
   };
 
   return (
-    <Layout style={{ minHeight: '100vh' }}>
-      <Sider collapsible collapsed={collapsed} onCollapse={setCollapsed}>
-        <div className="demo-logo-vertical" />
-        <Menu
-          theme="dark"
-          selectedKeys={[pathname]}
-          mode="inline"
-          items={allowedMenuItems}
-          onClick={({ key }) => handleMenuClick(key)}
-        />
-      </Sider>
-      <Layout>
-        <Header style={{ padding: '0 24px', background: colorBgContainer }}>
-          <div className="flex justify-between items-center">
-            <div />
-            <div className="flex items-center space-x-4">
-              <span>Hi, {user?.fullName}</span>
-              <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
-                Logout
-              </Button>
-
-              <Button onClick={toggleDarkMode}>
-                {isDarkMode ? <MoonOutlined /> : <SunOutlined />}
-              </Button>
-            </div>
-          </div>
-        </Header>
-        <Content style={{ margin: '24px 16px 0' }}>
-          <div
+    <ConfigProvider
+      theme={{
+        algorithm: isDarkMode ? theme.darkAlgorithm : theme.defaultAlgorithm,
+      }}
+    >
+      <Layout style={{ minHeight: '100vh' }}>
+        <Sider
+          collapsible
+          collapsed={collapsed}
+          onCollapse={setCollapsed}
+          breakpoint="lg"
+          collapsedWidth={0}
+          theme={isDarkMode ? 'dark' : 'light'}
+        >
+          <div className="demo-logo-vertical" />
+          <Menu
+            theme={isDarkMode ? 'dark' : 'light'}
+            selectedKeys={[pathname]}
+            mode="inline"
+            items={allowedMenuItems}
+            onClick={({ key }) => handleMenuClick(key)}
+          />
+        </Sider>
+        <Layout>
+          <Header
             style={{
-              padding: 24,
-              minHeight: 360,
-              background: colorBgContainer,
-              borderRadius: borderRadiusLG,
+              padding: '0 24px',
+              background: isDarkMode ? '#141414' : '#ffffff',
+              borderBottom: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0',
             }}
           >
-            {children}
-          </div>
-        </Content>
-        <Footer style={{ textAlign: 'center' }}>Company CRUD ©{new Date().getFullYear()}</Footer>
+            <div className="flex justify-between items-center">
+              <div />
+              <div className="flex items-center space-x-4">
+                <span style={{ color: isDarkMode ? '#ffffff' : '#000000' }}>
+                  Hi, {user?.fullName}
+                </span>
+                <Button type="text" icon={<LogoutOutlined />} onClick={handleLogout}>
+                  Logout
+                </Button>
+
+                <Button
+                  type="text"
+                  icon={isDarkMode ? <SunOutlined /> : <MoonOutlined />}
+                  onClick={toggleDarkMode}
+                  title={isDarkMode ? 'Switch to Light Mode' : 'Switch to Dark Mode'}
+                >
+                  {isDarkMode ? 'Light' : 'Dark'}
+                </Button>
+              </div>
+            </div>
+          </Header>
+          <Content
+            style={{
+              margin: '24px 16px 0',
+              background: isDarkMode ? '#0f0f0f' : '#f5f5f5',
+            }}
+          >
+            <div
+              style={{
+                padding: 24,
+                minHeight: 360,
+                background: isDarkMode ? '#1f1f1f' : '#ffffff',
+                borderRadius: borderRadiusLG,
+                border: isDarkMode ? '1px solid #303030' : '1px solid #d9d9d9',
+              }}
+            >
+              {children}
+            </div>
+          </Content>
+          <Footer
+            style={{
+              textAlign: 'center',
+              background: isDarkMode ? '#141414' : '#ffffff',
+              color: isDarkMode ? '#ffffff' : '#000000',
+              borderTop: isDarkMode ? '1px solid #303030' : '1px solid #f0f0f0',
+            }}
+          >
+            Company CRUD ©{new Date().getFullYear()}
+          </Footer>
+        </Layout>
       </Layout>
-    </Layout>
+    </ConfigProvider>
   );
 };
 

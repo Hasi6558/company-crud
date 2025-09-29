@@ -11,6 +11,7 @@ import api from '@/app/lib/axios';
 import { PERMISSION_LABELS } from '@/constants/permissions';
 import ChangePasswordModal from '@/components/ChangePasswordModal';
 import { usePermission } from '@/components/UsePermissions';
+import EditProfileModal from '@/components/EditProfileModal';
 
 const ProfilesPage: React.FC = () => {
   const { user } = useAuth();
@@ -38,23 +39,13 @@ const ProfilesPage: React.FC = () => {
   };
   const { can } = usePermission();
 
-  const handleProfileUpdate = async (values: { fullname: string; email: string; role: string }) => {
+  const handleProfileUpdate = async (values: { fullname: string; email: string }) => {
     try {
       if (!user) return;
-
-      const selectedRole = allRoles.find(
-        (role) => role.name.toLowerCase() === values.role.toLowerCase(),
-      );
-
-      if (!selectedRole) {
-        console.error('Role not found:', values.role);
-        return;
-      }
 
       const updateData = {
         fullName: values.fullname,
         email: values.email,
-        roleId: selectedRole.id,
       };
 
       await api.patch(`/users/update/${user.id}`, updateData);
@@ -132,10 +123,9 @@ const ProfilesPage: React.FC = () => {
           onCancel={() => setIsPasswordChangeModalOpen(false)}
           changePassword={changePassword}
         />
-        <EditUserModal
+        <EditProfileModal
           open={isEditModalOpen}
           user={user}
-          roles={allRoles}
           onCancel={() => setIsEditModalOpen(false)}
           onSave={handleProfileUpdate}
         />
