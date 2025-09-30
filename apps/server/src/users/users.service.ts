@@ -13,7 +13,9 @@ export class UsersService {
   ) {}
 
   findAll(): Promise<User[]> {
-    return this.repo.find();
+    return this.repo.find({
+      relations: ['role'],
+    });
   }
 
   findOne(id: string): Promise<User | null> {
@@ -46,6 +48,20 @@ export class UsersService {
   }
   findByEmail(email: string): Promise<User | null> {
     return this.repo.findOneBy({ email });
+  }
+
+  async searchUsers(searchTerm?: string): Promise<User[]> {
+    const queryBuilder = this.repo
+      .createQueryBuilder('user')
+      .leftJoinAndSelect('user.role', 'role');
+
+    if (searchTerm && searchTerm.trim()) {
+      queryBuilder.where('LOWER(user.fullName) LIKE LOWER(:searchTerm)', {
+        searchTerm: `%${searchTerm.trim()}%`,
+      });
+    }
+
+    return queryBuilder.orderBy('user.fullName', 'ASC').getMany();
   }
 
   async findOneWithPermissions(id: string): Promise<User | null> {

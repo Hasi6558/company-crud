@@ -1,5 +1,5 @@
 'use client';
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { Modal, Button, Input, message, FormInstance } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
@@ -15,6 +15,8 @@ const UsersPage: React.FC = () => {
   const [allUsers, setAllUsers] = useState<User[]>([]);
   const [allRoles, setAllRoles] = useState<Role[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
+  const [searchTerm, setSearchTerm] = useState<string>('');
+  const [isSearchLoading, setIsSearchLoading] = useState<boolean>(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedUserToEdit, setSelectedUserToEdit] = useState<User | null>(null);
   const [selectedUserToDelete, setSelectedUserToDelete] = useState<User | null>(null);
@@ -23,19 +25,20 @@ const UsersPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isUserAddModalOpen, SetIsUserAddModalOpen] = useState(false);
 
-  useEffect(() => {
-    loadUsers();
-    loadRoles();
-  }, []);
   const { can } = usePermission();
-  const loadUsers = async () => {
+
+  const loadUsers = useCallback(async () => {
     try {
       const response = await api.get('/users');
       setAllUsers(response.data);
+
+      if (!searchTerm.trim()) {
+        setFilteredUsers(response.data);
+      }
     } catch (error) {
       console.error('Failed to load users:', error);
     }
-  };
+  }, [searchTerm]);
 
   const loadRoles = async () => {
     try {
@@ -46,11 +49,31 @@ const UsersPage: React.FC = () => {
     }
   };
 
-  const handleSearch = (value: string) => {
-    const filtered = allUsers.filter((user) =>
-      user.fullName.toLowerCase().includes(value.toLowerCase()),
-    );
-    setFilteredUsers(filtered);
+  useEffect(() => {
+    loadUsers();
+    loadRoles();
+  }, [loadUsers]);
+
+  const handleSearch = async (value: string) => {
+    setSearchTerm(value);
+    setIsSearchLoading(true);
+
+    try {
+      if (value.trim()) {
+        // Search users using backend API
+        const response = await api.get(`/users/search?name=${encodeURIComponent(value.trim())}`);
+        setFilteredUsers(response.data);
+      } else {
+        // If empty search, show all users
+        setFilteredUsers(allUsers);
+      }
+    } catch (error) {
+      console.error('Failed to search users:', error);
+      // Fallback to showing all users on error
+      setFilteredUsers(allUsers);
+    } finally {
+      setIsSearchLoading(false);
+    }
   };
 
   const handleRowClick = (user: User) => {
@@ -253,7 +276,9 @@ const UsersPage: React.FC = () => {
                 <Input
                   placeholder="Search users by name..."
                   prefix={<SearchOutlined style={{ color: '#aaa' }} />}
+                  value={searchTerm}
                   onChange={(e) => handleSearch(e.target.value)}
+                  suffix={isSearchLoading ? <span>Searching...</span> : null}
                 />
               </div>
             </div>

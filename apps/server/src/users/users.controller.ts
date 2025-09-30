@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Param, Patch, Post } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Patch, Post, Query } from '@nestjs/common';
 import { UsersService } from './users.service';
 import { CreateUserDto } from './create-user.dto';
 import { UseGuards } from '@nestjs/common';
@@ -11,6 +11,12 @@ import { Permissions } from '../auth/permissions.enum';
 @Controller('users')
 export class UsersController {
   constructor(private readonly usersService: UsersService) {}
+
+  @Permission(Permissions.READ_USERS)
+  @Get('search')
+  searchUsers(@Query('name') name?: string) {
+    return this.usersService.searchUsers(name);
+  }
 
   @Permission(Permissions.READ_USERS)
   @Get()
