@@ -11,7 +11,7 @@ const LoginPage = () => {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
   const router = useRouter();
-  const { refreshUser } = useAuth();
+  const { refreshUser, user, isLoading: authLoading } = useAuth();
 
   const handleSubmit = useCallback(
     async (values: { email: string; password: string }) => {
@@ -47,6 +47,29 @@ const LoginPage = () => {
     },
     [refreshUser, router],
   );
+
+  // Redirect if already logged in
+  React.useEffect(() => {
+    if (!authLoading && user) {
+      router.replace('/profiles');
+    }
+  }, [user, authLoading, router]);
+
+  // Show loading if checking auth
+  if (authLoading) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-gray-100">
+        <Card className="w-full max-w-md shadow-lg">
+          <div className="text-center">Checking authentication...</div>
+        </Card>
+      </div>
+    );
+  }
+
+  // Don't render login form if user is already logged in
+  if (user) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-100">

@@ -22,9 +22,9 @@ export class AuthController {
 
     // Set cookie (not HTTP-only so frontend can access it)
     res.cookie('token', tokenData.accessToken, {
-      httpOnly: false, // Allow JavaScript access
-      secure: false, // Set to true in production with HTTPS
-      sameSite: 'lax', // CSRF protection
+      httpOnly: false,
+      secure: false,
+      sameSite: 'lax',
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       path: '/',
     });

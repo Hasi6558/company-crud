@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input } from 'antd';
+import { Modal, Button, Input, message } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
 import UserTable from '@/components/UserTable';
@@ -136,7 +136,23 @@ const UsersPage: React.FC = () => {
       await api.post(`users/${response.data.id}/password`, { password: values.password });
       console.log('Password set successfully');
       await loadUsers();
-    } catch (e) {
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'response' in e &&
+        typeof (e as { response?: unknown }).response === 'object' &&
+        (e as { response?: { status?: number; data?: { message?: string[] } } }).response !== null
+      ) {
+        const { status, data } = (
+          e as { response: { status?: number; data?: { message?: string[] } } }
+        ).response;
+        if (status === 400 && Array.isArray(data?.message)) {
+          data.message.forEach((msg: string) => {
+            console.error('API error:', msg);
+          });
+        }
+      }
       console.log('Failed to create user:', e);
     } finally {
       SetIsUserAddModalOpen(false);

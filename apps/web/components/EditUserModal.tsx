@@ -43,7 +43,7 @@ const EditUserModal: React.FC<EditUserModalProps> = ({ open, user, roles, onCanc
             <Form.Item label="Full Name :" name="fullname" rules={[{ required: true }]}>
               <Input />
             </Form.Item>
-            <Form.Item label="Email :" name="email">
+            <Form.Item label="Email :" name="email" rules={[{ required: true, type: 'email' }]}>
               <Input />
             </Form.Item>
             <Form.Item label="Role :" name="role" rules={[{ required: true }]}>

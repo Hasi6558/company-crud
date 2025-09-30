@@ -85,16 +85,24 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const checkAuth = async () => {
       setIsLoading(true);
       try {
-        await fetchUserProfile();
+        // Check if token exists in localStorage before making API call
+        const token = localStorage.getItem('authToken');
+        if (token) {
+          await fetchUserProfile();
+        } else {
+          setUser(null);
+        }
       } catch (error) {
         console.error('Failed to check auth:', error);
+        setUser(null);
+        localStorage.removeItem('authToken');
       } finally {
         setIsLoading(false);
       }
     };
 
     checkAuth();
-  }, []);
+  }, [fetchUserProfile]);
 
   const value = useMemo(
     () => ({

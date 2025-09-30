@@ -3,31 +3,33 @@ import { parseCookies, destroyCookie } from 'nookies';
 
 const api = axios.create({
   baseURL: 'http://localhost:4001',
-  // Remove withCredentials since we're not using cookies anymore
+  withCredentials: true,
 });
 
-// Add request interceptor to include token from localStorage
 api.interceptors.request.use(
   (config) => {
-    const cookies = parseCookies();
-    const token = cookies.token;
-    if (token) {
-      config.headers.Authorization = `Bearer ${token}`;
+    if (typeof window !== 'undefined') {
+      const cookies = parseCookies(); // read cookies on client
+      const token = cookies.token; // "token" cookie
+      if (token) {
+        config.headers.Authorization = `Bearer ${token}`;
+      }
     }
     return config;
   },
-  (error) => {
-    return Promise.reject(error);
-  },
+  (error) => Promise.reject(error),
 );
 
-// Add response interceptor to handle token expiration
 api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
-      destroyCookie(null, 'token');
-      window.location.href = '/login';
+      if (typeof window !== 'undefined') {
+        destroyCookie(null, 'token'); // remove cookie
+        if (!window.location.pathname.includes('/login')) {
+          window.location.href = '/login';
+        }
+      }
     }
     return Promise.reject(error);
   },
