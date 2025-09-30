@@ -1,6 +1,6 @@
 'use client';
 import React, { useEffect } from 'react';
-import { Modal, Form, Input, Select, Button } from 'antd';
+import { Modal, Form, Input, Select, FormInstance } from 'antd';
 import { User, Role } from '@/types';
 
 interface EditUserModalProps {
@@ -9,10 +9,22 @@ interface EditUserModalProps {
   roles: Role[];
   onCancel: () => void;
   onSave: (values: { fullname: string; email: string; role: string }) => void;
+  onFormReady?: (form: FormInstance) => void;
 }
 
-const EditUserModal: React.FC<EditUserModalProps> = ({ open, user, roles, onCancel, onSave }) => {
+const EditUserModal: React.FC<EditUserModalProps> = ({
+  open,
+  user,
+  roles,
+  onCancel,
+  onSave,
+  onFormReady,
+}) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    onFormReady?.(form);
+  }, [form, onFormReady]);
 
   useEffect(() => {
     if (user && open) {

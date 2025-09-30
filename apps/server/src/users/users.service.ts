@@ -1,4 +1,4 @@
-﻿import { Injectable, NotFoundException } from '@nestjs/common';
+﻿import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { User } from './user.entity';
@@ -20,6 +20,12 @@ export class UsersService {
     return this.repo.findOneBy({ id });
   }
   async create(dto: CreateUserDto): Promise<User> {
+    // Check if email already exists
+    const existingUser = await this.findByEmail(dto.email);
+    if (existingUser) {
+      throw new ConflictException('Email is already registered');
+    }
+
     const role = await this.roleRepo.findOne({
       where: { id: dto.roleId },
     });
@@ -52,6 +58,14 @@ export class UsersService {
     const user = await this.repo.findOneBy({ id });
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Check if email is being updated and if it already exists
+    if (dto.email !== undefined && dto.email !== user.email) {
+      const existingUser = await this.findByEmail(dto.email);
+      if (existingUser && existingUser.id !== id) {
+        throw new ConflictException('Email is already registered');
+      }
     }
 
     if (dto.roleId) {

@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Modal, Button, Input, message } from 'antd';
+import { Modal, Button, Input, message, FormInstance } from 'antd';
 import { SearchOutlined, UserOutlined } from '@ant-design/icons';
 import SharedLayout from '@/components/SharedLayout';
 import UserTable from '@/components/UserTable';
@@ -96,8 +96,56 @@ const UsersPage: React.FC = () => {
       await api.patch(`/users/update/${selectedUserToEdit.id}`, updateData);
       setIsEditModalOpen(false);
       await loadUsers();
-    } catch (error) {
-      console.error('Failed to update user:', error);
+
+      // Reset form on successful update
+      if (editUserForm) {
+        editUserForm.resetFields();
+      }
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'response' in e &&
+        typeof (e as { response?: unknown }).response === 'object' &&
+        (e as { response?: { status?: number; data?: { message?: string[] } } }).response !== null
+      ) {
+        const { status, data } = (
+          e as { response: { status?: number; data?: { message?: string[] } } }
+        ).response;
+
+        if (status === 400 && Array.isArray(data?.message) && editUserForm) {
+          // Map validation errors to form fields
+          const fieldErrors: { name: string; errors: string[] }[] = [];
+
+          data.message.forEach((msg: string) => {
+            console.log('Processing update error:', msg);
+
+            // Map error messages to form fields
+            if (msg.includes('email')) {
+              fieldErrors.push({ name: 'email', errors: [msg] });
+            } else if (msg.includes('fullName') || msg.includes('name')) {
+              fieldErrors.push({ name: 'fullname', errors: [msg] });
+            } else if (msg.includes('role')) {
+              fieldErrors.push({ name: 'role', errors: [msg] });
+            }
+          });
+
+          console.log('Setting edit form field errors:', fieldErrors);
+          editUserForm.setFields(fieldErrors);
+        } else if (status === 409 && editUserForm) {
+          // Handle email already exists error
+          const errorMessage = Array.isArray(data?.message)
+            ? data.message[0]
+            : data?.message || 'Email is already registered';
+          editUserForm.setFields([
+            {
+              name: 'email',
+              errors: [errorMessage],
+            },
+          ]);
+        }
+      }
+      console.log('Failed to update user:', e);
     }
   };
 
@@ -112,6 +160,9 @@ const UsersPage: React.FC = () => {
       console.error('Failed to delete user:', error);
     }
   };
+  const [userForm, setUserForm] = useState<FormInstance | null>(null);
+  const [editUserForm, setEditUserForm] = useState<FormInstance | null>(null);
+
   const handleUserCreate = async (values: {
     fullname: string;
     email: string;
@@ -136,6 +187,12 @@ const UsersPage: React.FC = () => {
       await api.post(`users/${response.data.id}/password`, { password: values.password });
       console.log('Password set successfully');
       await loadUsers();
+
+      // Only reset form and close modal on successful creation
+      if (userForm) {
+        userForm.resetFields();
+      }
+      SetIsUserAddModalOpen(false);
     } catch (e: unknown) {
       if (
         typeof e === 'object' &&
@@ -147,15 +204,41 @@ const UsersPage: React.FC = () => {
         const { status, data } = (
           e as { response: { status?: number; data?: { message?: string[] } } }
         ).response;
-        if (status === 400 && Array.isArray(data?.message)) {
+        if (status === 400 && Array.isArray(data?.message) && userForm) {
+          // Map validation errors to form fields
+          const fieldErrors: { name: string; errors: string[] }[] = [];
+
           data.message.forEach((msg: string) => {
-            console.error('API error:', msg);
+            console.log('Processing error:', msg);
+
+            // Map error messages to form fields
+            if (msg.includes('email')) {
+              fieldErrors.push({ name: 'email', errors: [msg] });
+            } else if (msg.includes('fullName') || msg.includes('name')) {
+              fieldErrors.push({ name: 'fullname', errors: [msg] });
+            } else if (msg.includes('role')) {
+              fieldErrors.push({ name: 'role', errors: [msg] });
+            } else if (msg.includes('password')) {
+              fieldErrors.push({ name: 'password', errors: [msg] });
+            }
           });
+
+          console.log('Setting form field errors:', fieldErrors);
+          userForm.setFields(fieldErrors);
+        } else if (status === 409 && userForm) {
+          // Handle email already exists error
+          const errorMessage = Array.isArray(data?.message)
+            ? data.message[0]
+            : data?.message || 'Email is already registered';
+          userForm.setFields([
+            {
+              name: 'email',
+              errors: [errorMessage],
+            },
+          ]);
         }
       }
       console.log('Failed to create user:', e);
-    } finally {
-      SetIsUserAddModalOpen(false);
     }
   };
 
@@ -189,6 +272,7 @@ const UsersPage: React.FC = () => {
             handleUserCreate={handleUserCreate}
             open={isUserAddModalOpen}
             onCancel={() => SetIsUserAddModalOpen(false)}
+            onFormReady={setUserForm}
           />
 
           <UserTable
@@ -251,6 +335,7 @@ const UsersPage: React.FC = () => {
             roles={allRoles}
             onCancel={() => setIsEditModalOpen(false)}
             onSave={handleUserUpdate}
+            onFormReady={setEditUserForm}
           />
 
           {/* Delete Confirmation Modal */}

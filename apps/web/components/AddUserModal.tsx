@@ -1,4 +1,4 @@
-import { Button, Form, Input, Modal, Select } from 'antd';
+import { Button, Form, Input, Modal, Select, FormInstance } from 'antd';
 import Password from 'antd/es/input/Password';
 import React from 'react';
 
@@ -17,6 +17,7 @@ interface AddUserProps {
   open: boolean;
   onCancel: () => void;
   handleUserCreate?: (value: UserFormValues) => void;
+  onFormReady?: (form: FormInstance) => void;
 }
 const AddUserModal: React.FC<AddUserProps> = ({
   roles,
@@ -24,8 +25,19 @@ const AddUserModal: React.FC<AddUserProps> = ({
   open,
   onCancel,
   handleUserCreate,
+  onFormReady,
 }) => {
   const [form] = Form.useForm();
+
+  React.useEffect(() => {
+    onFormReady?.(form);
+  }, [form, onFormReady]);
+
+  React.useEffect(() => {
+    if (open) {
+      form.resetFields();
+    }
+  }, [open, form]);
 
   const handleCancel = () => {
     form.resetFields(); // Clear all form fields
@@ -43,7 +55,6 @@ const AddUserModal: React.FC<AddUserProps> = ({
         colon={false}
         onFinish={(value) => {
           handleUserCreate?.(value);
-          form.resetFields(); // Clear form after submission
         }}
         initialValues={initialValues}
       >
