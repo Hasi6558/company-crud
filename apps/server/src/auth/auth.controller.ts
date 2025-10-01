@@ -20,7 +20,6 @@ export class AuthController {
     const user = await this.authService.validateUser(dto.email, dto.password);
     const tokenData = this.authService.signToken(user);
 
-    // Set cookie (not HTTP-only so frontend can access it)
     res.cookie('token', tokenData.accessToken, {
       httpOnly: false,
       secure: false,
@@ -29,7 +28,6 @@ export class AuthController {
       path: '/',
     });
 
-    // Return token in response body instead of setting cookie
     return {
       message: 'Login successful',
       accessToken: tokenData.accessToken,

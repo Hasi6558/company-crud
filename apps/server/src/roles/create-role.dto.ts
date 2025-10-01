@@ -3,7 +3,6 @@ import { IsNotEmpty, IsString, IsArray, IsOptional, MinLength } from 'class-vali
 export class CreateRoleDto {
   @IsString()
   @IsNotEmpty()
-  @MinLength(6, { message: 'Role name must be at least 6 characters long' })
   name: string;
 
   @IsString()

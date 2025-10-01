@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { Button, Modal } from 'antd';
+import { Button, Modal, FormInstance } from 'antd';
 import SharedLayout from '@/components/SharedLayout';
 import RoleTable from '@/components/RoleTable';
 import EditPermissionsModal from '@/components/EditPermissionsModal';
@@ -18,6 +18,7 @@ const RolesPage: React.FC = () => {
   const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
   const [isEditPermissionsModalOpen, setIsEditPermissionsModalOpen] = useState(false);
   const [isAddRoleModalOpen, setIsAddRoleModalOpen] = useState(false);
+  const [roleForm, setRoleForm] = useState<FormInstance | null>(null);
 
   useEffect(() => {
     loadRoles();
@@ -74,7 +75,7 @@ const RolesPage: React.FC = () => {
       console.error('Failed to delete role:', error);
     }
   };
-  const handleAddRole = (roleName: string) => {
+  const handleAddRole = () => {
     console.log('Add Role clicked');
     setIsAddRoleModalOpen(true);
   };
@@ -83,10 +84,56 @@ const RolesPage: React.FC = () => {
       if (!roleName) return;
       const roleDataToSend = { name: roleName };
       await api.post('/roles', roleDataToSend);
+
+      // Only reset form and close modal on successful creation
+      if (roleForm) {
+        roleForm.resetFields();
+      }
       setIsAddRoleModalOpen(false);
       await loadRoles();
-    } catch (error) {
-      console.error('Failed to add role:', error);
+    } catch (e: unknown) {
+      if (
+        typeof e === 'object' &&
+        e !== null &&
+        'response' in e &&
+        typeof (e as { response?: unknown }).response === 'object' &&
+        (e as { response?: { status?: number; data?: { message?: string[] } } }).response !== null
+      ) {
+        const { status, data } = (
+          e as { response: { status?: number; data?: { message?: string[] } } }
+        ).response;
+
+        if (status === 400 && Array.isArray(data?.message) && roleForm) {
+          // Map validation errors to form fields
+          const fieldErrors: { name: string; errors: string[] }[] = [];
+
+          data.message.forEach((msg: string) => {
+            console.log('Processing role error:', msg);
+
+            // Map error messages to form fields
+            if (msg.includes('name')) {
+              fieldErrors.push({ name: 'roleName', errors: [msg] });
+            } else if (msg.includes('description')) {
+              fieldErrors.push({ name: 'description', errors: [msg] });
+            }
+          });
+
+          console.log('Setting role form field errors:', fieldErrors);
+          roleForm.setFields(fieldErrors);
+        } else if (status === 409 && roleForm) {
+          // Handle role name already exists error
+          const errorMessage = Array.isArray(data?.message)
+            ? data.message[0]
+            : data?.message || 'Role name already exists';
+          roleForm.setFields([
+            {
+              name: 'roleName',
+              errors: [errorMessage],
+            },
+          ]);
+        }
+      }
+      console.log('Failed to add role:', e);
     }
   };
 
@@ -97,7 +144,7 @@ const RolesPage: React.FC = () => {
         <div className="flex justify-end">
           <Button
             type="primary"
-            onClick={() => handleAddRole('New Role')}
+            onClick={() => handleAddRole()}
             style={{ marginBottom: '10px' }}
             disabled={!can(['create:roles'])}
           >
@@ -107,8 +154,14 @@ const RolesPage: React.FC = () => {
 
         <AddRoleModal
           open={isAddRoleModalOpen}
-          onCancel={() => setIsAddRoleModalOpen(false)}
+          onCancel={() => {
+            setIsAddRoleModalOpen(false);
+            if (roleForm) {
+              roleForm.resetFields();
+            }
+          }}
           addRole={addRole}
+          onFormReady={setRoleForm}
         />
 
         <RoleTable

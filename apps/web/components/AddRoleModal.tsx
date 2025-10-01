@@ -1,15 +1,26 @@
 'use client';
-import { Input, Form, Modal } from 'antd';
-import React from 'react';
+import { Input, Form, Modal, FormInstance } from 'antd';
+import React, { useEffect } from 'react';
 
 interface EditRoleProp {
   open: boolean;
   onCancel: () => void;
   addRole: (roleName: string) => void;
+  onFormReady?: (form: FormInstance) => void;
 }
 
-const AddRoleModal: React.FC<EditRoleProp> = ({ open, onCancel, addRole }) => {
+const AddRoleModal: React.FC<EditRoleProp> = ({ open, onCancel, addRole, onFormReady }) => {
   const [form] = Form.useForm();
+
+  useEffect(() => {
+    onFormReady?.(form);
+  }, [form, onFormReady]);
+
+  useEffect(() => {
+    if (open) {
+      form.resetFields();
+    }
+  }, [open, form]);
 
   return (
     <Modal open={open} onCancel={onCancel} okText="Add" title="Add New Role" onOk={form.submit}>

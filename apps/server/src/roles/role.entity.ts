@@ -14,12 +14,11 @@ export class Role {
   id: string;
 
   @Column({ unique: true })
-  name: string; // e.g. "admin", "manager", "user"
+  name: string;
 
   @Column({ nullable: true })
   description: string;
 
-  // One role can have many users
   @OneToMany(() => User, (user) => user.role)
   users: User[];
 
